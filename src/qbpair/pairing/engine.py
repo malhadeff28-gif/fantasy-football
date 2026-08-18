@@ -83,8 +83,19 @@ def score_pair(
     weeks: list[int],
     replacement: dict[int, float] | float = 12.0,
     coverage_threshold: float = 14.0,
+    stream_floor: dict[int, float] | float | None = None,
 ) -> PairResult:
-    """Run the weekly start/sit rule across a season for one pair."""
+    """Run the weekly start/sit rule across a season for one pair.
+
+    `stream_floor` gives the pair manager the same waiver access a single-QB
+    manager has: if the better of his two quarterbacks projects below the
+    streamable level, he starts a streamer instead. Without it, holding two
+    quarterbacks can score *worse* than holding one, which is an artefact of
+    the simulation rather than a real property of the strategy -- a manager is
+    never forced to start a bad QB2 simply because he owns him.
+
+    The comparison uses projections, never outcomes, so it stays pregame.
+    """
     wa, wb = slate.get(qb_a, {}), slate.get(qb_b, {})
     res = PairResult(qb_a=names.get(qb_a, qb_a), qb_b=names.get(qb_b, qb_b),
                      season=season)
@@ -114,6 +125,19 @@ def score_pair(
             else:
                 pts, started, best_proj = rb[1], "B", rb[0]
                 res.started_b += 1
+
+        # Same waiver access a single-QB manager has: if the better of the two
+        # projects below streamable level, stream instead. Decided on
+        # projections, so no outcome information is used.
+        if stream_floor is not None and best_proj is not None:
+            floor = (stream_floor[w] if isinstance(stream_floor, dict)
+                     else stream_floor)
+            if best_proj < floor:
+                if started == "A":
+                    res.started_a -= 1
+                elif started == "B":
+                    res.started_b -= 1
+                pts, started, best_proj = repl, "replacement", None
 
         fail = best_proj is not None and best_proj < coverage_threshold
         if best_proj is None:
