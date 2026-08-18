@@ -82,7 +82,16 @@ def load_snap_counts(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
 
 def load_pfr_advstats(seasons: list[int], stat_type: str = "pass",
                       refresh: bool = False) -> pl.DataFrame:
-    """Pro Football Reference advanced stats: pressure, blitz, hurries."""
+    """Pro Football Reference advanced stats: pressure, blitz, hurries, sacks.
+
+    Coverage verified 2026-08-18, and narrower than it looks:
+    - **2018-2025 only.** The loader hard-rejects 2017 and earlier and 2026.
+      No pressure or blitz feature can ever cover 2007-2017.
+    - One row per PLAYER-game, receivers included, keyed by `pfr_player_id`,
+      NOT gsis. Crosswalk via `load_players()`; that mapping is 100% complete.
+    - `receiving_drop*` and all three `def_times_*` columns are 100% null.
+    - There are NO scramble columns here. Scrambles must come from play-by-play.
+    """
     import nflreadpy as nfl
 
     tag = f"pfr_{stat_type}_{min(seasons)}_{max(seasons)}"
@@ -93,7 +102,16 @@ def load_pfr_advstats(seasons: list[int], stat_type: str = "pass",
 
 def load_nextgen_stats(seasons: list[int], stat_type: str = "passing",
                        refresh: bool = False) -> pl.DataFrame:
-    """NFL Next Gen Stats: time to throw, aggressiveness, expected completion."""
+    """NFL Next Gen Stats: time to throw, aggressiveness, expected completion.
+
+    Two traps, both verified 2026-08-18:
+    - **`week == 0` rows are SEASON AGGREGATES**, not a week. Filter them out
+      or every rolling feature is silently corrupted.
+    - NGS publishes only qualified passers: **minimum 15 attempts** on a weekly
+      row. Starts of 10-14 attempts are structurally unreachable, so any panel
+      using a 10-attempt threshold loses about 3.5% of rows to NGS by design.
+    - Coverage 2016-2025.
+    """
     import nflreadpy as nfl
 
     tag = f"ngs_{stat_type}_{min(seasons)}_{max(seasons)}"
