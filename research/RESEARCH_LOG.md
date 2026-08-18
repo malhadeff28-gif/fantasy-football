@@ -223,3 +223,70 @@ bye structure, or price).
 OpenBLAS fails to allocate per-thread buffers on this machine at the default
 thread count; every analysis script pins BLAS threads to 1 before importing
 numpy.
+
+---
+
+## 2026-08-17 - Phases 3-9 complete
+
+Ran the original plan through to the research gate, per user decision to
+prioritise completeness over compressing around the Phase 2 negative results.
+
+### Phase 3 - scheduling effects
+
+Real (|t| >= 2): wind >= 15mph -1.61, away -0.69, indoors +0.65, home +0.44.
+Not significant: rest (including off-bye), division games, time of season.
+Weeks 14-18 show no effect at all.
+
+Game competitiveness is not usable pregame: pass and rush attempts are flat
+across spread buckets. Actual game script is huge (-3.81 for losing big) but
+unforecastable from the line.
+
+Complementarity measured directly: two QBs' pregame environments correlate
++0.008, actual weekly points +0.006. Nothing to exploit.
+
+### Phase 4 - matchup granularity
+
+No matchup adjustment (MAE 5.9183) beat league-wide (5.9188), archetype
+(5.9193) and individual (5.9455). Split-half reliability of per-QB matchup
+sensitivity r = +0.065 over 41 QBs. Rejected as unstable complexity.
+
+### Phase 5 - pairing engine
+
+Built models/projection.py and pairing/engine.py. Feature set lean by
+evidence. First run scored 300 pairs for 2025.
+
+### Phase 6 - draft and bench cost
+
+Measured pick-value curve from real FFC drafts. Marginal value of QB2:
++9.7 next to an elite QB1, +30.1 next to a mid one. Streaming never had a
+losing season while every drafted strategy did.
+
+### Phase 7 - decision-rule benchmarks
+
+model 332.2 pts/season vs always-QB1 327.3, oracle 367.9. The model captures
+12.0% of available upside; accuracy 62.89% vs 59.84% baseline.
+
+### Phase 8 - 2026 board
+
+Built from 1,415 real drafts plus CBS projections rescored to league rules.
+Three bugs found and fixed in review: fractional ADPs fell between integer
+pick-cost buckets and returned zero cost; Jacksonville failed to map to the
+nflverse team code; shared-bye pairs ranked as if complementary.
+
+The headline result is negative: the ranking is not robust. Varying the
+insurance premium or pick-cost weight over a reasonable range reorders it
+completely (Josh Allen's best pair moves between rank 1 and rank 123).
+
+### Phase 9 - verdict
+
+QB_PAIRING_RESEARCH.md written with all 19 required sections and labelled
+conclusions. Verdict: MODIFY, leaning stop. Do not build the interactive
+tool. The weekly recommendation is worth ~5 points a season over a rule you
+can apply mentally, and the pair ranking is not stable enough to present as
+an ordering. Recommended instead: a one-paragraph draft rule, a thin weekly
+projection helper, and forward-collection of the market data that could not
+be backtested.
+
+### Verification
+
+All eight analysis scripts run end to end. Thirteen output CSVs regenerate.
