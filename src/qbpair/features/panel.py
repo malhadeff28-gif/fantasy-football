@@ -44,17 +44,28 @@ def _qb_form_panel(stats: pl.DataFrame) -> pl.DataFrame:
         prior_roll("passing_yards", "form_pass_yds"),
         prior_roll("passing_tds", "form_pass_td"),
         prior_roll("rushing_tds", "form_rush_td"),
+        # play-style inputs for archetype work (Phase 4)
+        prior_roll("passing_air_yards", "form_air_yds"),
+        prior_roll("passing_cpoe", "form_cpoe"),
+        prior_roll("sacks_suffered", "form_sacks"),
         pl.col("fantasy_points").shift(1).is_not_null().cum_sum()
         .over("player_id").alias("games_prior"),
         pl.col("fantasy_points").shift(1).cum_sum().over("player_id").alias("_csum"),
     ).with_columns(
         (pl.col("_csum") / pl.col("games_prior")).alias("career_fp_mean")
     ).with_columns(
-        # play-style axis: how much of the production comes from rushing
+        # play-style axes, all from prior games only
         (
             (pl.col("form_rush_yds") * 0.1 + pl.col("form_rush_td") * 6)
             / pl.col("form_fp_mean").clip(lower_bound=1.0)
-        ).alias("rush_fp_share")
+        ).alias("rush_fp_share"),
+        # average depth of target: how far downfield he throws
+        (pl.col("form_air_yds") / pl.col("form_pass_att").clip(lower_bound=1.0))
+        .alias("form_adot"),
+        # pressure exposure
+        (pl.col("form_sacks")
+         / (pl.col("form_pass_att") + pl.col("form_sacks")).clip(lower_bound=1.0))
+        .alias("form_sack_rate"),
     ).drop("_csum")
 
 
@@ -155,6 +166,7 @@ def build_panel(seasons: list[int]) -> pl.DataFrame:
         "game_id", "team", "opponent", "fantasy_points",
         "form_fp_mean", "form_fp_sd", "career_fp_mean", "games_prior",
         "form_pass_att", "form_rush_att", "form_rush_yds", "rush_fp_share",
+        "form_adot", "form_cpoe", "form_sack_rate",
         "is_home", "team_spread", "spread_abs", "total_line",
         "implied_team_total", "implied_opp_total", "rest", "div_game", "indoors",
         "def_fp_allowed", "def_adj", "def_n",
