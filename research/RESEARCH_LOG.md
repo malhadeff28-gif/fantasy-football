@@ -88,11 +88,33 @@ data model rather than needing a special case.
   used raw, per the brief's warning that a favourite is not automatically the
   better fantasy QB.
 
-### Open questions raised for the human
+### Decisions surfaced to the human, and answered
 
-Recorded in the session; see "Open modelling decisions" in
-`QB_PAIRING_RESEARCH.md` when written.
+Three choices were put to the user before being locked in.
 
-1. Backtest depth: 19 seasons of line coverage vs. NFL rule/era drift.
-2. Whether the QB2-on-bye-week case should be modelled with waiver replacement.
-3. Whether prediction markets stay in scope given they cannot be backtested.
+1. **Backtest window → 2018-2025 (modern era only).** Chosen over the
+   recommended 2011-2025. Accepted risk: 8 seasons is thin for interaction
+   terms. Binding mitigation on Phase 4: archetype-level effects over per-QB
+   coefficients, regularisation, out-of-sample reporting.
+   `BACKTEST_SEASONS_EXTENDED` retained for robustness runs.
+
+2. **Sportsbook props → adopted (The Odds API, $99/mo).** Adapter built and
+   env-var gated; awaiting the user's subscription and `ODDS_API_KEY`.
+   Constraint to respect: prop history starts 2023-05, covering only 3 of the
+   8 backtest seasons, so the prop layer must be additive and optional.
+
+3. **GitHub repo → private.** Created and pushed:
+   <https://github.com/malhadeff28-gif/qb-pairing-lab>
+
+### Still open
+
+- Whether the QB2-on-bye-week case should be modelled with waiver replacement,
+  or penalised flatly as the brief's default assumes.
+- Regular-season vs playoff weighting — to be resolved by sensitivity analysis
+  in Phase 6, per the brief, not chosen arbitrarily.
+
+### Next
+
+Phase 2: research what actually predicts QB fantasy outcomes. First test is
+whether schedule-difficulty features carry real predictive signal *before*
+they are given weight in the pairing model — the brief's own stated risk.

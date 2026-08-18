@@ -20,10 +20,11 @@ Verification entry points: `scripts/walk_one_qb_week.py`, `src/qbpair/data/loade
 | 6 | CBS Sports projections | season QB projections | public HTML | free | current | verified |
 | 7 | Kalshi | game + QB prop markets | public REST | free | live only | verified, limited |
 | 8 | Polymarket | NFL markets | public REST | free | live only | verified, weak |
-| 9 | The Odds API | sportsbook props | REST + key | **$99/mo** | props from 2023-05 | not adopted |
+| 9 | The Odds API | sportsbook props | REST + key | **$99/mo** | props from 2023-05 | **adopted**, key required |
 
 **Headline result: the project can be built and backtested end to end at zero
-data cost.** The one materially missing input is historical QB player props.
+data cost.** The one materially missing input is historical QB player props,
+which the user elected to purchase (see §6.1).
 
 ---
 
@@ -167,6 +168,40 @@ be collected prospectively. Per the brief's instruction to include market data
 only where it genuinely contributes, prediction markets should be treated as an
 in-season enrichment to be validated forward, not a modelling input the thesis
 depends on.
+
+---
+
+### 6.1 Decisions taken 2026-08-17
+
+**Backtest window: 2018-2025 (modern rushing-QB era).** Line coverage would
+permit 2007+, but the user elected the narrower, more representative window.
+Recorded risk: 8 seasons is thin for fitting QB-characteristic x opponent
+interaction terms, and only ~5 are 17-game seasons. Mitigations are binding on
+Phase 4 — prefer archetype-level effects over per-QB coefficients, regularise,
+and report out-of-sample performance rather than in-sample fit.
+`BACKTEST_SEASONS_EXTENDED` (2007-2025) remains available as a robustness check.
+
+**Sportsbook props: adopted.** The Odds API Business tier ($99/mo) is the only
+source of historical NFL player props, available from 2023-05-03. Note this
+covers **2023, 2024, 2025 — three of the eight backtest seasons**, so prop
+features must be built as an *additive* layer that the model can run without,
+not as a core input, or five seasons of backtest become unusable.
+
+Setup required from the user (not performed automatically — this is a paid
+subscription):
+
+1. Subscribe at <https://the-odds-api.com/> (Business tier for NFL props).
+2. Put the key in the environment as `ODDS_API_KEY`, or a local `.env`
+   (already gitignored). Never commit it.
+3. Verify with `loaders.odds_api_status()`, which reports quota headers and
+   never echoes the key.
+
+Adapter: `src/qbpair/data/loaders.py` — `list_events`, `event_props`, with
+`date_iso` snapshot support so a backtest can request only prices published
+before kickoff.
+
+**Prediction markets: forward-only.** Kalshi collection is retained to build a
+price history prospectively, but nothing in the thesis will depend on it.
 
 ---
 
