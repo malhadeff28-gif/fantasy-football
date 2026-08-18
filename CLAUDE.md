@@ -64,9 +64,10 @@ alternate specifications.
 - 16 CPU cores but **~1.8 GB free RAM** — memory, not CPU, is the binding
   constraint. Cap concurrent heavy agents at 3. Pin BLAS threads to 1 before
   importing numpy; OpenBLAS fails to allocate otherwise.
-- git worktrees available; `gh` 2.95 authenticated; node 24.17; no R
-- Subagents available. ECC, Ponytail, OmniRoute plugins installed (OmniRoute
-  not configured; `setup` needs interactive input)
+- `gh` 2.95 authenticated; node 24.17; no R
+- Subagents, git worktrees, `/batch` and `/loop` all verified available
+- ECC, Ponytail and OmniRoute plugins installed. OmniRoute is NOT configured;
+  its `setup` needs interactive input the agent shell cannot supply
 
 ## Cost rule
 

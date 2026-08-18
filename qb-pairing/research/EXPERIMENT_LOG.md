@@ -44,4 +44,55 @@ Detailed narrative in `RESEARCH_LOG.md`; summarised here as formal records.
 
 ## Wave 1 - deep research (2026-08-18)
 
-In progress. Records appended as experiments complete.
+| ID | Question | Result | Effect | OOS | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| QB-016 | Do markets add information after a public projection is known? | Yes | +1.85 pp pair accuracy (SE 0.35, t=5.28) | yes, 6/6 seasons | **KEEP** |
+| QB-016b | Does the projection add anything given form + market? | No | -0.16 pp (SE 0.19) | yes | **REJECT** |
+| QB-019 | Do QBs differ in matchup sensitivity? (hierarchical) | No, unidentifiable | LRT p=0.130, singular fit | n/a | **REJECT** |
+| QB-019b | Do QBs differ in market sensitivity? (never tested before) | No | LRT p=0.495, singular fit | n/a | **REJECT** |
+| QB-017 | Does nonlinear structure exist beyond ridge? | agent running | | | pending |
+| QB-018 | Do pressure/blitz/NGS variables add value? | agent running | | | pending |
+
+### QB-016 detail (Market Agent)
+
+The question was posed backwards, and the reversal is the finding. Markets add
+**+1.85 pp** of start/sit accuracy over a consensus-projection proxy, rising to
+**+4.63 pp** on close calls. But given recent form *and* the market, adding the
+published projection is worth **-0.16 pp**. The preseason projection is the
+redundant input, not the market.
+
+Mechanism, model-free: implied team total correlates 0.150 with the form
+residual and 0.141 with the consensus residual. An August projection cannot
+contain a week-11 injury, depth chart or weather, so no better preseason
+projection absorbs it. Consistent with this, the gain concentrates in weeks
+10-18 (+3.26 pp vs +0.74 pp early) - a static projection decaying while the
+market updates. Flagged exploratory, no multiplicity correction.
+
+The market contribution is **essentially one number**: implied team total
+correlates 0.817 with team spread and 0.574 with game total. Not three signals.
+
+Proxy validation: the consensus proxy correlates **r = 0.867** with the real
+CBS 2026 board, the one season where both exist. CBS historical archive
+confirmed dead at run time (2022/2025/2026 URLs return an identical 77-row
+table), so the proxy was genuinely necessary rather than a shortcut.
+
+Independent replication: the agent rebuilt the Wave 0 pair set from scratch and
+reproduced form -> form+market at **+1.46 pp**, matching QB-004 exactly.
+
+Carry-forward caveat: the effect size depends on baseline strength. Always
+quote it with its baseline attached.
+
+### QB-019 detail (Research Director, R/lme4)
+
+Random-slopes mixed models on 3,842 QB-weeks and 69 quarterbacks. Neither a
+per-QB slope on opponent difficulty (p=0.130) nor on implied team total
+(p=0.495) earns its place; AIC flat, BIC worse for both, and **both fits are
+singular**, meaning the data cannot identify separate slope variance at all.
+
+Random-slope SD on opponent difficulty is 0.194 against a residual SD of 7.41.
+This is the strongest available statement that QB-specific matchup effects do
+not exist, and it supersedes the informal split-half test.
+
+New result: quarterbacks do not differ in market sensitivity either, so the
+implied-team-total coefficient can be applied league-wide with no per-player
+tuning anywhere in the model.
