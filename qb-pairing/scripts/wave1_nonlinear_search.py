@@ -746,6 +746,12 @@ def main() -> int:
     nullB_max = nullB.max(axis=1)
     nullB_acc_max = nullB_acc.max(axis=1)
     print(f"null B elapsed        : {time.time() - t0:.0f}s")
+    exp_pos = float((nullB > 0).sum(axis=1).mean())
+    print(f"pairs improving MAE   : {(obs_delta > 0).sum()}/{len(obs_vec)} observed "
+          f"vs {exp_pos:.1f}/{len(obs_vec)} expected under the null")
+    print(f"mean gain over all pairs: {obs_delta.mean():+.5f} observed vs "
+          f"{nullB.mean():+.5f} null -- a randomly chosen interaction is, on")
+    print("average, a cost rather than a benefit.")
 
     shap_top = set(ranked[:RUN["n_candidates"]].tolist())
     hand_idx = {}

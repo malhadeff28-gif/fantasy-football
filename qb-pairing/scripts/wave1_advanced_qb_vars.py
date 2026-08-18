@@ -77,7 +77,9 @@ TEST_SEASONS = list(range(2020, 2026))     # matches the existing backtest
 FORM_WINDOW = pm.FORM_WINDOW                # 8 games, same as the baseline
 DEF_WINDOW = pm.DEF_WINDOW                  # 17 games, same as the baseline
 BOOT = 500
-RNG = np.random.default_rng(20260818)
+BOOT_SEED = 20260818     # re-seeded per comparison: common random numbers, so
+                         # every model is bootstrapped on the same week draws
+                         # and a result does not depend on call order
 
 PBP_URL = ("https://github.com/nflverse/nflverse-data/releases/download/pbp/"
            "play_by_play_{s}.parquet")
@@ -559,9 +561,10 @@ def boot_delta(base: pl.DataFrame, aug: pl.DataFrame) -> dict:
     aeb, nb = week_ae(base)
     aea, na = week_ae(aug)
     nweeks = len(tb)
+    rng = np.random.default_rng(BOOT_SEED)
     acc_d, mae_d = [], []
     for _ in range(BOOT):
-        idx = RNG.integers(0, nweeks, nweeks)
+        idx = rng.integers(0, nweeks, nweeks)
         acc_d.append(ca[idx].sum() / ta[idx].sum() - cb[idx].sum() / tb[idx].sum())
         mae_d.append(aea[idx].sum() / na[idx].sum() - aeb[idx].sum() / nb[idx].sum())
     acc_d = np.array(acc_d) * 100
