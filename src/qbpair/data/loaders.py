@@ -212,3 +212,90 @@ def kalshi_markets(series_ticker: str, status: str = "open") -> list[dict]:
     )
     r.raise_for_status()
     return r.json().get("markets", [])
+
+
+# --- CBS Sports projections (public HTML) -----------------------------------
+
+CBS_URL = ("https://www.cbssports.com/fantasy/football/stats/"
+           "{pos}/{season}/season/projections/ppr/")
+
+# Column order in the CBS projections table, verified 2026-08-17.
+_CBS_COLS = ["player", "games", "pass_att", "completions", "pass_yds",
+             "pass_ypg", "pass_td", "interceptions", "rating", "rush_att",
+             "rush_yds", "rush_avg", "rush_td", "fumbles_lost",
+             "cbs_fantasy_points", "cbs_fppg"]
+
+
+def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
+    """CBS season projections, rescored under this league's rules.
+
+    CBS publishes its own fantasy total, but under a scoring configuration that
+    does not match this league (their Josh Allen total implies roughly 6-point
+    passing TDs). Component stats are therefore rescored with `config.Scoring`
+    so the comparison is like for like; the original CBS number is retained as
+    `cbs_fantasy_points` for reference.
+    """
+    import re
+
+    import requests
+
+    from ..config import Scoring
+
+    r = requests.get(
+        CBS_URL.format(pos=pos, season=season),
+        headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
+        timeout=45,
+    )
+    r.raise_for_status()
+    rows = re.findall(r'<tr class="TableBase-bodyTr">(.*?)</tr>', r.text, re.S)
+
+    recs = []
+    for row in rows:
+        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+        if len(cells) < len(_CBS_COLS):
+            continue
+        vals = [" ".join(re.sub(r"<[^>]+>", " ", c).split()) for c in cells]
+        # first cell repeats "J. Allen QB BUF Josh Allen QB BUF"
+        parts = vals[0].split()
+        try:
+            team = parts[-1]
+            name = " ".join(parts[-3:-1]) if len(parts) >= 3 else vals[0]
+            # prefer the expanded "Josh Allen QB BUF" tail
+            tail = vals[0].split(pos)
+            if len(tail) >= 2:
+                name = tail[-2].strip().split("  ")[-1].strip() or name
+        except Exception:
+            continue
+
+        def num(i):
+            try:
+                return float(vals[i].replace(",", ""))
+            except Exception:
+                return 0.0
+
+        rec = {c: num(i) for i, c in enumerate(_CBS_COLS) if c != "player"}
+        rec["player"] = name
+        rec["team"] = team
+        recs.append(rec)
+
+    df = pl.DataFrame(recs)
+    s = Scoring()
+    # the name cell arrives as "<TEAM> Firstname Lastname"; drop the prefix
+    df = df.with_columns(
+        pl.when(pl.col("player").str.starts_with(pl.col("team") + " "))
+        .then(pl.col("player").str.slice(pl.col("team").str.len_chars() + 1))
+        .otherwise(pl.col("player"))
+        .str.strip_chars()
+        .alias("player")
+    )
+    return df.with_columns(
+        (pl.col("pass_yds") * s.pass_yds
+         + pl.col("pass_td") * s.pass_td
+         + pl.col("interceptions") * s.interception
+         + pl.col("rush_yds") * s.rush_yds
+         + pl.col("rush_td") * s.rush_td
+         + pl.col("fumbles_lost") * s.fumble_lost).alias("proj_points_league")
+    ).with_columns(
+        (pl.col("proj_points_league") / pl.col("games").clip(lower_bound=1))
+        .alias("proj_ppg_league")
+    ).sort("proj_points_league", descending=True)
