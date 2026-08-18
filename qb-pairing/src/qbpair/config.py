@@ -8,9 +8,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-DATA_RAW = ROOT / "data" / "raw"
-DATA_PROCESSED = ROOT / "data" / "processed"
+PROJECT = Path(__file__).resolve().parents[2]          # qb-pairing/
+REPO = PROJECT.parent                                  # fantasy-football/
+ROOT = PROJECT
+# nflverse pulls are identical for every lab, so the cache is shared
+SHARED_CACHE = REPO / "shared" / "nfl-data" / "cache"
+DATA_RAW = SHARED_CACHE / "raw"
+DATA_PROCESSED = SHARED_CACHE / "processed"
 OUTPUTS = ROOT / "outputs"
 
 

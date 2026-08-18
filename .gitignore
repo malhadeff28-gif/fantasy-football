@@ -10,3 +10,8 @@ outputs/*
 !outputs/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+
+# shared cache is regenerable
+shared/nfl-data/cache/
+*/outputs/*
+!*/outputs/.gitkeep
