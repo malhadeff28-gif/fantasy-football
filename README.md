@@ -22,8 +22,10 @@ The QB pairing thesis was tested across eight seasons and **the proposed
 mechanism does not exist**: two quarterbacks weekly outcomes correlate at
 +0.006, opponent difficulty adds +0.06 percentage points of start/sit accuracy,
 and per-QB matchup sensitivity fails a split-half reliability test at r=0.065.
-A second quarterback is still worth drafting, but as insurance against the
-first one failing, which needs none of that machinery.
+An earlier version concluded a second quarterback still paid for itself as
+insurance. An adversarial pass broke that too: the apparent gain compared
+strategies that did not share the same QB1. Held fixed, a backup costs about
+11 points a season, negative at all seven price points tested.
 
 Full brief: [`qb-pairing/research/QB_PAIRING_RESEARCH.md`](qb-pairing/research/QB_PAIRING_RESEARCH.md)
 

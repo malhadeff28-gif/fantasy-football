@@ -2,410 +2,436 @@
 
 **2026 fantasy football — can two quarterbacks beat one good one?**
 
-Research period: 2026-08-17 · League: 12-team, 1QB/2RB/3WR/1TE/K/DST, no flex,
-7 bench, standard 4-point passing TDs · Backtest: 2018–2025, walk-forward
+League: 12-team, 1QB/2RB/3WR/1TE/K/DST, no flex, 7 bench, standard 4-point
+passing TDs · Backtest: 2018–2025, walk-forward · Last revised: 2026-08-18
 
-Every conclusion below is labelled **[evidence]** (measured in this repository),
-**[inference]** (a reasonable reading of the evidence), or **[hypothesis]**
-(proposed, not established).
+> **Revision notice.** An adversarial re-analysis (Wave 2) broke the central
+> economic finding of the first version of this report. Retired figures are
+> struck through rather than deleted, so the record shows what was claimed,
+> what broke it, and why. Four bugs in the analysis code were found and fixed in
+> the process. See [§14](#14-what-the-adversarial-pass-found).
+
+Conclusions are labelled **[evidence]** (measured here), **[inference]**
+(a reasonable reading), or **[hypothesis]** (proposed, not established).
 
 ---
 
 ## 1. Executive summary
 
-**The thesis as posed is not supported. A weaker version of it is.**
+**The thesis is not supported, and neither is the fallback position.**
 
 The project set out to test whether two quarterbacks with complementary
-schedules can beat one expensive quarterback. Three findings dismantle the
+schedules beat one expensive quarterback. Three measurements dismantle the
 mechanism:
 
 1. **Schedule difficulty barely predicts anything.** Adding opponent difficulty
-   to a model that already knows a quarterback's recent form improves weekly
-   start/sit accuracy by **0.06 percentage points**. Added on top of the betting
-   market it contributes **−0.01 pp** — nothing. [evidence]
-2. **At draft time it is weaker still.** Team defensive ratings persist
-   year-to-year at only **r = 0.206**, and a prior-season rating explains
-   **0.39%** of the variance in quarterback outcomes. The gap between the
-   easiest and hardest third of schedules is **1.00 fantasy point per game**.
+   to a model that already knows recent form improves weekly start/sit accuracy
+   by **0.06 percentage points**; on top of the betting market, **−0.01 pp**.
    [evidence]
-3. **There is no complementarity to find.** Across 2,163 pairs, the correlation
-   between two quarterbacks' weekly outcomes is **+0.006**, and between their
-   pregame environments **+0.008**. Their results are already independent, so
-   there is no correlation structure for a pairing model to exploit. [evidence]
+2. **At draft time it is weaker still.** Team defensive ratings persist
+   year-to-year at **r = 0.206**, and a prior-season rating explains **0.39%**
+   of quarterback variance. [evidence]
+3. **There is no complementarity to find.** Across 2,163 pairs, two
+   quarterbacks' weekly outcomes correlate at **+0.006**. Their results are
+   already independent. [evidence]
 
-**What survives is real but different.** Carrying a second quarterback is worth
-roughly **+9.7 points per season** alongside an elite QB1 and **+30.1** alongside
-a mid-priced one, net of the draft pick it costs. But that value is
-**availability insurance against QB1 failing** — not weekly matchup
-exploitation. [evidence for the magnitudes, inference for the mechanism]
+The first version then argued a second quarterback still paid for itself as
+*insurance*, at ~~+9.7 points per season alongside an elite QB1 and +30.1
+alongside a mid-priced one~~. **That was wrong.** Those figures compared
+strategies that did not share the same QB1, so most of the gap was the QB1
+upgrade. Holding QB1 fixed, a second quarterback **costs about 11 points a
+season**, negative at all seven price points tested. [evidence]
 
-The weekly start/sit decision, which was supposed to be the engine of the
-strategy, is worth **+4.9 points per season** over simply starting your better
-quarterback every week — **12% of the theoretically available upside**. [evidence]
+**What survives:** the betting market carries real weekly information —
+**+1.85 pp** of start/sit accuracy over a public projection, and **+0.55 pp**
+even against a projection fitted with hindsight. The weekly decision itself is
+worth **+5.0 points a season**, about 12% of the theoretically available upside.
 
-**Recommendation: MODIFY, leaning stop.** Do not build the interactive tool.
-Section 19 gives the specific alternative.
+**Recommendation: stop.** Draft one quarterback, use the bench slot elsewhere,
+do not build a tool. §19 gives the specifics.
 
 ---
 
 ## 2. Thesis
-
-As stated at the outset:
 
 > A fantasy manager can avoid spending heavily on a single premium QB by
 > drafting two quarterbacks whose draft cost, complementary schedules,
 > individual matchup characteristics, and weekly start decisions produce better
 > value than one elite quarterback.
 
-This decomposes into four testable claims, and they fared very differently:
-
 | Claim | Verdict |
 |-------|---------|
 | Schedules can be chosen to complement each other | **Rejected** [evidence] |
 | Opponents affect different QBs differently | **Rejected** [evidence] |
-| A manager can pick the right QB weekly | **Weakly supported** — 62.9% vs 59.8% baseline [evidence] |
-| Two cheap QBs can beat one expensive one on value | **Partly supported** — but not for the proposed reason [evidence] |
+| A manager can pick the right QB weekly | **Weakly supported** — 62.9% vs 59.8% [evidence] |
+| Two cheap QBs beat one expensive one on value | **Rejected** — −10.6/season [evidence] |
 
 ---
 
 ## 3. League format and why it matters
 
-12 teams, one starting quarterback, no flex, seven bench slots, standard
-scoring with 4-point passing touchdowns.
-
-Three consequences shape everything:
-
-- **One QB slot** means a second quarterback never adds points directly; he only
-  adds *optionality*. His entire value is the difference between his week and
-  QB1's week, on weeks you choose correctly, plus coverage when QB1 is out.
-- **No flex** removes the usual escape valve, so the bench slot is a pure cost.
-- **12 teams with 7 bench slots** means 192 players rostered. The waiver wire
-  stays deep at quarterback, which is why streaming performs as well as it does
-  (§15).
-- **4-point passing TDs** compress the quarterback position. QB12 averaged
-  **272 season points** across 2018–2025, and the spread from QB1 to QB12 is
-  narrow relative to the spread at running back.
+- **One QB slot** means a second quarterback never adds points directly, only
+  optionality. His entire value is the difference between his week and QB1's,
+  on weeks you choose correctly, plus coverage when QB1 is out.
+- **No flex** removes the usual escape valve; the bench slot is a pure cost.
+- **4-point passing TDs** compress the position. QB12 averaged **237 season
+  points** over the weeks this league actually plays.
+- **The league finishes in week 16.** NFL weeks 17–18 are fantasy-irrelevant
+  here — a fact that turned out to matter (§14).
 
 ---
 
 ## 4. Data-source inventory
 
-Full detail in [`DATA_SOURCES.md`](DATA_SOURCES.md). Every source was verified
-against a live endpoint, not from documentation.
+Full detail in [`DATA_SOURCES.md`](DATA_SOURCES.md). Every source verified
+against a live endpoint.
 
-The material finding: **historical closing betting lines are free.** nflverse's
-schedule table carries spread, total, moneyline and odds at 100% coverage for
-2007–2025, which removed the project's assumed dependency on a paid odds
-provider and set the backtest window.
+The material finding: **historical closing betting lines are free**, at 100%
+coverage for 2007–2025 in nflverse schedules, removing the assumed dependency
+on a paid odds provider. League scoring matched nflverse `fantasy_points`
+exactly — 0.0 maximum difference across 1,389 QB-weeks.
 
-League scoring matched nflverse `fantasy_points` exactly — **0.0 maximum
-difference across 1,389 QB-weeks** — so no custom scorer was needed.
-
-A structural limit worth restating: **2026 forward lines stop after Week 7**.
-Weeks 14–16 have lines for 4 of 47 games. Market data therefore cannot inform
-the preseason playoff evaluation the brief requested.
+Structural limit: **2026 forward lines stop after week 7**; weeks 14–16 have
+lines for 4 of 47 games.
 
 ---
 
 ## 5. Betting-market methodology
 
-Market inputs are **decomposed rather than used raw**, per the brief's warning
-that a favourite is not automatically the better fantasy quarterback:
+Market inputs are **decomposed rather than used raw**: implied team total
+carries the scoring environment, spread magnitude the game script, game total
+the pace. The sign convention was verified empirically (`spread_line` positive
+when home is favoured, correlation +0.443 with home margin).
 
-- **implied team total** = `total_line / 2 + team_spread / 2` — the scoring
-  environment;
-- **spread magnitude** — expected game script;
-- **game total** — overall pace and scoring expectation.
+**The market is the most useful weekly input, and it is essentially one
+number.** Implied team total correlates 0.150 with the form residual, more than
+double any other feature — and correlates **0.817 with the spread** and **0.574
+with the game total**. It is not three signals:
+`implied_team_total == (total_line + spread) / 2` to machine precision.
 
-The sign convention was verified empirically rather than assumed: `spread_line`
-is positive when the home team is favoured (correlation with home margin
-**+0.443**, 2015–2025).
+Consequently `spread_abs` was **removed from the model**: worth −0.01 pp, and
+dropping it improved the market increment from +1.85 to +1.89 pp.
 
-**Result: the market is the single most useful weekly input.** Implied team
-total correlates **0.150** with the form residual, more than double any other
-feature, and adding market data lifts start/sit accuracy by **+1.46 pp** — the
-largest single gain measured anywhere in this project. [evidence]
+**Does the market beat a public projection?** Yes. Against a documented
+consensus proxy, **+1.85 pp** (player-clustered SE 0.48, 95% CI [0.97, 2.87],
+positive in 6 of 6 seasons), rising to **+4.63 pp** on close calls. Against a
+projection *fitted with hindsight on the same season* — an upper bound no real
+projection can beat — it still adds **+0.55 pp** (t = 2.25). [evidence]
 
-But note the ceiling this implies. The best available weekly signal moves
-accuracy from 62.5% to 64.0%. Weekly quarterback scoring is mostly irreducible
-noise: the best model reaches **R² ≈ 0.18**.
+The reverse also holds: given form and the market, adding the published
+projection is worth −0.16 pp with a CI of [−0.69, +0.39] — **indistinguishable
+from zero**, a weaker and more accurate statement than the first version's
+"worth nothing".
+
+**Unresolved threat:** nflverse carries *closing* lines. No opening line exists
+in the archive, and a manager setting a lineup early in the week sees a
+different number. This caveat applies to the entire market finding.
 
 ---
 
 ## 6. Prediction-market methodology
 
-Kalshi carries genuinely QB-level series — `KXNFLPASSTDS`, `KXNFLPASSATT`,
-`KXNFLSEASONPASSYDS` — free, which is notable since sportsbook APIs gate
-passing-TD props behind $99/month.
+Kalshi carries free QB-level series (`KXNFLPASSTDS`, `KXNFLPASSATT`) — the same
+data sportsbook APIs gate behind $99/month. **But they cannot be used here:**
+queried 2026-08-17 those series had zero open markets (they activate in season),
+and neither Kalshi nor Polymarket publishes a free price history, so neither can
+be backtested. Polymarket's August NFL inventory is novelty markets.
 
-**They cannot be used for this research.** [evidence]
-
-- Queried 2026-08-17, `KXNFLPASSTDS` returned **zero open markets**; these
-  series activate in-season.
-- Neither Kalshi nor Polymarket publishes a free historical price archive, so
-  **neither can be backtested at all**.
-- Polymarket's August NFL inventory is novelty markets ("Tush Push banned for
-  2026?").
-
-For game-level information both venues are largely redundant with the
-sportsbook lines already free in nflverse. [inference]
-
-**Disposition:** retained as forward-only collection so a price history exists
-next season; nothing in the thesis depends on them. Sportsbook props were
-adopted separately by user decision (§18).
+**Disposition:** forward-only collection, so a price history exists next season.
+Nothing in the thesis depends on them.
 
 ---
 
 ## 7. NFL scheduling research
 
 Each effect measured against the form residual — actual minus the
-quarterback's own 8-game average — so a good quarterback on a good team cannot
-masquerade as a scheduling effect. Marked where |t| ≥ 2.
+quarterback's own 8-game average.
 
-| Effect | Size (fantasy pts) | t | Verdict |
-|--------|-------------------|---|---------|
-| Wind ≥ 15 mph | **−1.61** | −3.45 | real |
-| Wind 8–14 mph | −0.57 | −2.39 | real |
+| Effect | Size | t | Verdict |
+|--------|------|---|---------|
+| Wind ≥ 15 mph | **−1.48** | −2.53 | real, but see below |
+| Home field | **+1.32** | +4.38 | real, and universal |
 | Away | −0.69 | −4.11 | real |
 | Indoors | +0.65 | +2.88 | real |
-| Home | +0.44 | +2.52 | real |
 | Outdoors | −0.47 | −3.28 | real |
+| ~~Wind 8–14 mph~~ | ~~−0.57~~ **−0.45** | **−1.29** | **broken** |
 | Division game | −0.33 | −1.65 | not significant |
 | Short week (≤4 days) | +0.67 | +1.37 | not significant |
-| Off bye (14+ days) | −0.59 | −1.21 | not significant |
+| Coming off bye | −0.59 | −1.21 | not significant |
 | Weeks 14–18 | −0.02 | −0.07 | **no effect** |
 
-Three results deserve emphasis:
+**Rest does not matter**, including coming off a bye, which contradicts common
+practice. **Weeks 14–18 score like any other weeks**, settling the
+playoff-weighting question by evidence. And **weather is real but much smaller
+than first reported** — the original figures were raw bucket means rather than
+contrasts, with standard errors treating two quarterbacks in one game as
+independent (§14).
 
-- **Rest does not matter**, including coming off a bye, which contradicts
-  common practice. [evidence]
-- **Weather is the largest scheduling effect** and is not knowable at draft
-  time — and `temp`/`wind` are only 38–75% populated, so it is hard to use even
-  in-season.
-- **Time of season has no effect.** Weeks 14–18 score like any other weeks,
-  which bears directly on playoff weighting (§13).
+The claim that weather was the largest scheduling effect is **false**: home
+field is larger and applies to *every* game rather than 7% of them. Wind ≥15 mph
+hits 7.1% of QB-weeks, and only 18.5% of within-week pairs are close enough for
+a 1.5-point tiebreak to change the decision — an **upper bound of 0.66 points
+per season**, against +5.0 for the entire start/sit decision.
 
-### Game competitiveness
+### Game script: large, real, and useless
 
-The brief hypothesised that a close game raises aggression and rushing
-opportunity. **Not supported pregame.** [evidence]
-
-Pass and rush attempts are flat across spread buckets (32.4 / 32.6 / 32.1 and
-3.7 / 3.7 / 3.7 for toss-ups, moderate and lopsided games), and expected
-competitiveness has no significant effect on the residual.
-
-*Actual* game script matters enormously — losing big is worth **−3.81 points**
-(t = −17.8), winning big **+2.07** — but it is not forecastable from the
-pregame line. This is the clearest example in the project of a large real
-effect that is useless for decisions. [evidence]
+Pregame, competitiveness does not shift opportunity: pass and rush attempts are
+flat across spread buckets (32.4 / 32.6 / 32.1 and 3.7 / 3.7 / 3.7). But how a
+game *actually* unfolds matters enormously — losing big is worth **−3.81
+points** (t = −17.8). It cannot be forecast from the closing line. A large
+effect and a usable edge are different things.
 
 ---
 
 ## 8. QB-specific matchup effects
 
-The brief's central concept, tested at three levels of granularity.
+Archetypes from k-means on prior-only play style are interpretable — pocket
+high-volume (Goff, Mahomes, Herbert; rushing share 0.097), downfield (Mayfield,
+Allen, Stafford; aDOT 8.86), rushing (Jackson, Hurts, Fields; rushing share
+0.307).
 
-K-means on prior-only play style produces interpretable archetypes:
+**No granularity of matchup adjustment beats using none at all:**
 
-| Archetype | n | rush share | aDOT | pass att | exemplars |
-|-----------|---|-----------|------|----------|-----------|
-| 0 pocket | 1,840 | 0.097 | 7.15 | 34.6 | Goff, Mahomes, Cousins, Herbert |
-| 1 downfield | 1,379 | 0.143 | 8.86 | 33.3 | Mayfield, Allen, Wilson, Stafford |
-| 2 rushing | 1,049 | 0.307 | 8.08 | 27.4 | Jackson, Hurts, Fields |
+| Granularity | MAE | Pair accuracy |
+|-------------|-----|---------------|
+| **None** | **5.9183** | **64.17%** |
+| League-wide | 5.9188 | 64.07% |
+| Archetype | 5.9193 | 64.18% |
+| Individual (per QB) | 5.9455 | 63.67% |
 
-**No granularity of matchup adjustment beats using none at all:** [evidence]
+Two independent diagnostics confirm it. **Split-half reliability**: for 41
+quarterbacks with 40+ games, matchup sensitivity in two random halves of their
+own games correlates at **r = +0.065**. And a **random-slopes mixed model**
+(lme4, 3,842 QB-weeks, 69 quarterbacks) finds the per-QB slope on opponent
+difficulty does not earn its place — LRT **p = 0.130**, AIC flat, BIC worse, and
+**the fit is singular**, meaning the data cannot identify separate slope
+variance at all. Random-slope SD is 0.194 against a residual SD of 7.41.
 
-| Matchup granularity | MAE | pair accuracy |
-|--------------------|-----|---------------|
-| **none** | **5.9183** | **64.17%** |
-| league-wide | 5.9188 | 64.07% |
-| archetype | 5.9193 | 64.18% |
-| individual | 5.9455 | 63.67% |
-
-The decisive diagnostic is split-half reliability. For 41 quarterbacks with ≥40
-games, matchup sensitivity measured in two random halves of their own games
-correlates at **r = +0.065** — explaining 0.4% of variance. A quarterback's
-apparent matchup sensitivity does not replicate against himself, so per-QB
-coefficients fit noise. **Rejected as unstable complexity.** [evidence]
+**New result:** quarterbacks do not differ in *market* sensitivity either
+(p = 0.495, also singular), so the implied-team-total coefficient applies
+league-wide with no per-player tuning anywhere. [evidence]
 
 ---
 
 ## 9. Proposed QB-week model
 
-Ridge regression, walk-forward (train on all prior seasons, test on the next),
-never in-sample. Standardised coefficients, 2018–2024:
+Ridge regression, walk-forward. Standardised coefficients:
 
 | Feature | Coefficient |
 |---------|------------|
-| implied team total | **+1.427** |
-| rushing attempts (form) | **+1.081** |
-| career points/game | +0.966 |
-| game total | +0.569 |
-| recent form | +0.548 |
-| indoors | +0.320 |
-| home | +0.250 |
-| pass attempts (form) | +0.147 |
-| spread magnitude | +0.022 |
+| Implied team total | **+1.427** |
+| Rushing attempts (form) | **+1.081** |
+| Career points/game | +0.966 |
+| Game total | +0.569 |
+| Recent form | +0.548 |
+| Indoors | +0.320 |
+| Home | +0.250 |
+| Pass attempts (form) | +0.147 |
 
-Opponent adjustment and QB×matchup interactions are **excluded by evidence**,
-not omitted by oversight — including them made the model marginally worse.
+Opponent adjustment, QB×matchup interactions and `spread_abs` are **excluded by
+evidence**, each measured neutral or negative.
 
-That rushing attempts rank second is worth noting: rushing volume is a stable
-floor, and it is the most durable individual trait in the model. [inference]
+**The linear form is not a limitation.** Gradient-boosted trees were fitted on
+identical folds and every variant lost: LightGBM +0.0292 MAE and −0.56 pp,
+XGBoost +0.0216 / −0.27 pp, residual boosting +0.0186 / −0.39 pp. The
+decomposition is informative — univariate curvature costs 0.029 MAE and
+*interactions add +0.0005 on top of that*. Trees cannot match linear main
+effects at this sample size; offered `num_leaves ∈ {3,7,15}` the tuner picked 3
+in five of six folds.
 
-Ridge rather than gradient boosting is deliberate — with 8 seasons the risk of
-over-fitting is live, and a regularised linear model makes the marginal
-contribution of each feature readable.
+**Advanced tracking data adds nothing either.** Twenty-two features from PFR
+advanced stats, Next Gen Stats and play-by-play were worth **−0.13 pp** in
+aggregate. The mechanism is redundancy, not noise: six of them are *more* stable
+year-to-year than fantasy points per game itself, and none helps, because how a
+quarterback plays is already contained in the 8-game mean of what he scored.
+**Stability is necessary but not sufficient.** [evidence]
+
+A genuine football finding fell out of that work: **pressure faced is a
+quarterback trait, not an offensive-line one.** At QB level it persists at
+r = 0.526 against r = 0.320 at team level, and time to throw says the same
+(0.660 vs 0.462). Pressure faced is mostly a function of how long he holds the
+ball. [evidence]
 
 ---
 
 ## 10. Pair-complementarity framework
 
-The framework exists in `src/qbpair/pairing/engine.py` and works: it scores any
-pair week by week, handles byes and unavailability, counts coverage failures,
-reports divergence, and separates regular-season from Weeks 14–16.
+The framework exists in `src/qbpair/pairing/engine.py` and works. **The concept
+it was built to exploit does not.**
 
-**The concept it was built to exploit does not exist.** [evidence]
+- Correlation of two quarterbacks' pregame implied team totals: **+0.008**
+- Correlation of their actual weekly fantasy points: **+0.006**
 
-Measured directly across 2,163 pairs:
-
-- correlation of two quarterbacks' pregame implied team totals: **+0.008**
-- correlation of their actual weekly fantasy points: **+0.006**
-
-Two quarterbacks' outcomes are already essentially independent. There is no
-systematic anti-correlation to discover, which means **the diversification
-benefit of holding two quarterbacks is the same whichever two you hold.**
-Selecting partners for "complementary schedules" adds essentially nothing on
-top of that.
-
-Within-week dispersion makes the same point: the pregame matchup signal has a
-standard deviation of 2.02 fantasy points, while actual weekly outcomes have a
-standard deviation of 8.09. The signal is small relative to the noise it is
-trying to sort.
+Outcomes are already essentially independent, so the diversification benefit of
+holding two quarterbacks is the same whichever two you hold. The pregame matchup
+signal has a standard deviation of 2.02 fantasy points against actual outcomes
+at 8.09.
 
 ---
 
 ## 11. Draft-cost framework
 
-Costs are measured, not assumed. Using real FFC drafts 2018–2025, expected
-**usable points above replacement** by pick range:
+Costs measured from real drafts, 2018–2025, over the weeks **this league
+actually plays** (1–16):
 
 | Picks | Mean usable PAR | Hit rate |
 |-------|----------------|----------|
-| 1–12 | 70.0 | 86% |
-| 13–24 | 47.2 | 71% |
-| 25–36 | 27.1 | 63% |
-| 49–60 | 21.3 | 55% |
-| 73–84 | 11.0 | 37% |
-| 97–108 | 7.7 | 29% |
-| 121–132 | 8.3 | 24% |
-| 145–156 | 4.5 | 18% |
+| 1–12 | 67.15 | 84.0% |
+| 13–24 | 43.38 | 74.7% |
+| 25–36 | 25.61 | 65.3% |
+| 37–48 | 26.50 | 59.6% |
+| 49–60 | 19.08 | 52.5% |
+| 61–72 | 13.13 | 45.3% |
+| 73–84 | 10.00 | 39.7% |
+| 97–108 | 7.62 | 25.7% |
+| 121–132 | 6.77 | 22.0% |
+| 133–144 | 5.40 | 20.4% |
 
-A second quarterback typically goes around picks 106–135, where the forgone
-alternative is worth roughly **5–8 points**. That is the bar QB2 must clear,
-and it is a low bar — which is the main reason the pairing strategy survives at
-all. [evidence]
+An independent reconstruction that never opened the original module reproduced
+this: identical ADP input (max difference 0.0) and **14 of 15 bucket means
+inside a season-clustered bootstrap interval**.
+
+**Two presentation corrections it forced.** From pick 61 onward the **median**
+pick returns exactly zero — the means above are carried by a minority of hits.
+And buckets 6 through 13 are **not statistically distinguishable from one
+another**, so quoting them as point estimates overstates the precision. The
+load-bearing figure is **7.92 usable PAR for picks 106–135, 95% CI [5.0,
+11.5]** — an interval overlapping the retired +9.7, meaning even on its own
+terms that figure was never distinguishable from break-even.
 
 ---
 
 ## 12. Bench-slot opportunity cost
 
-Everything is expressed in points above replacement so quarterback points and
-the forgone pick share units:
-
 ```
 net value = QB points delivered − QB12 replacement − expected return of picks spent on QBs
 ```
 
-Like-for-like across the five seasons where every strategy is present:
+The honest marginal holds QB1 **fixed** and adds a rank-18 partner:
 
-| Strategy | QB pts | vs QB12 | pick cost | **NET** | sd | worst |
-|----------|--------|---------|-----------|---------|-----|-------|
-| premium + late partner | 386.4 | 112.3 | 59.3 | **53.0** | 43.0 | −2.3 |
-| premium (QB1 only) | 369.2 | 95.1 | 51.8 | **43.3** | 52.3 | −20.1 |
-| late pair | 328.6 | 54.5 | 12.2 | **42.3** | 62.4 | −44.9 |
-| streaming (no QB drafted) | 310.4 | 36.3 | 0.0 | **36.3** | 20.3 | **+11.4** |
-| strong value + complement | 328.6 | 54.4 | 33.9 | **20.5** | 36.7 | −34.5 |
-| single value QB | 300.6 | 26.5 | 14.3 | **12.2** | 24.9 | −23.7 |
+| QB1 ADP rank | Alone | With QB2 | **QB2 adds** |
+|---|---|---|---|
+| 1 | 75.5 | 67.4 | **−8.1** |
+| 2 | 80.9 | 71.1 | **−9.7** |
+| 4 | 43.4 | 33.4 | **−9.9** |
+| 6 | 87.0 | 75.9 | **−11.1** |
+| 8 | 41.4 | 27.3 | **−14.1** |
+| 10 | 75.5 | 70.9 | **−4.6** |
+| 12 | 38.7 | 22.1 | **−16.7** |
 
-**Marginal value of adding QB2: +9.7 alongside an elite QB1, +30.1 alongside a
-mid-priced one.** [evidence]
+**Pooled −10.6 points per season, negative at 7 of 7 price points.** [evidence]
 
-The second quarterback clears its cost in both regimes, and clears it by far
-more when QB1 is cheaper and likelier to fail — which is the clearest
-quantitative signature that the mechanism is insurance. [inference]
+~~Marginal value of QB2: +9.7 alongside an elite QB1, +30.1 alongside a
+mid-priced one.~~ Retired — those differenced strategies with different QB1s.
 
-QB2 also cuts downside: worst season **−2.3** with a partner versus **−20.1**
-without. As risk management it is more convincing than as an offensive strategy.
+The **insurance argument is also retired**. Decomposed weekly, bye coverage is
+worth +1.0 and the weekly choice +1.7 points a season against a 5.8-point pick
+cost — and admitting *more* injured QB1s to the sample *lowers* the estimate.
+Injuries explain 8.8% of the original figure. The waiver wire supplies that
+coverage free.
 
 ---
 
 ## 13. Regular season versus playoff weighting
 
-The brief asked for regular-season performance to dominate, with Weeks 14–16
-adding a bonus, and for the exact weighting to come from sensitivity analysis
-rather than a guess.
+**The correct playoff weight is zero.** [evidence]
 
-**The analysis says the correct playoff weight is zero, and applying one would
-be decoration.** [evidence]
-
-- Weeks 14–18 show **no scoring effect** (−0.02, t = −0.07, §7).
-- Prior-season defensive ratings — the only playoff-schedule input available in
-  August — explain **0.39%** of quarterback variance.
-- 2026 playoff weeks have betting lines for **4 of 47 games**, so there is no
-  market view to substitute.
-
-A playoff-schedule bonus would therefore be sorting pairs on noise. The engine
-still reports the Weeks 14–16 split separately, because it is worth *seeing*;
-it just should not be *scored*.
+Weeks 14–18 show no scoring effect (−0.02, t = −0.07). Prior-season defensive
+ratings — the only playoff-schedule input available in August — explain 0.39%
+of variance. And 2026 playoff weeks have lines for 4 of 47 games. A
+playoff-schedule bonus would sort pairs on noise. The engine still *reports* the
+weeks 14–16 split; it just should not be *scored*.
 
 ---
 
-## 14. Historical-validation methodology
+## 14. What the adversarial pass found
 
-Full detail in [`METHODOLOGY.md`](METHODOLOGY.md). The essentials:
+Every surviving finding was handed to an agent instructed only to break it. The
+attacks began by **reproducing** everything — the pick-value curve to 0.0000
+from a rebuild that never opened the original module, the strategy table to the
+decimal, all three marginals. The failures below are real, not misreadings.
 
-- **Two independent no-look-ahead implementations** cross-checked against each
-  other (explicit per-week filtering, and vectorised shift-then-roll), agreeing
-  to 0.0. Look-ahead is the one failure mode that would invalidate everything
-  here and it is silent when it happens.
-- **Walk-forward only** — train on seasons before S, test on S. A random split
-  over panel data would leak the future into the past.
-- **An explicit leakage audit** asserting the latest input date precedes
-  kickoff.
-- **Decisions locked before outcomes are seen**, always.
+### The economics comparison was invalid
 
-Panel: 4,373 QB-weeks, 2018–2025, ≥10 pass attempts.
+"Late pair" drafts ADP ranks 10 and 18; "single value QB" drafts rank 8.
+Differencing them and attributing the gap to the second quarterback charges QB2
+with the effect of changing QB1. Rank-matched, the sign reverses everywhere.
+
+### No uncertainty had been reported, and it swamps the effect
+
+The +9.7 carried SE 4.8 and CI [−3.8, +23.1], p = 0.116. The +30.1 carried
+SE 34.0 and an interval **189 points wide**. Neither was ever distinguishable
+from zero, and both had been quoted to one decimal place.
+
+### A false positive that cleared its first null
+
+SHAP surfaced `career_fp_mean × implied_team_total`, which passed a raw
+within-week permutation null at family-wise **p = 0.000**. It is noise, caught
+three ways: a scale-free share statistic (observed interaction share 14.6%
+against a null mean of 29.2%, p = 1.000 — the real model is *half* as
+interaction-driven as a noise-fitting one); an exhaustive scan of all 171
+pairwise products with a max-statistic null (best gains 0.14% of baseline error
+at p = 0.360; 37/171 improved against 34.1 expected by chance); and a temporal
+split where all five top candidates hurt. **A single null is not enough when the
+statistic is scale-dependent.**
+
+### A second exploratory finding that did not replicate
+
+The claim that the market's edge concentrates in weeks 10–18 (+3.26 pp vs
++0.74) was pre-registered and tested on held-out seasons 2014–2019: **+0.03 pp,
+t = 0.15, 3 of 6 seasons**, CI [−2.68, +3.00]. On the generating set it had been
++2.60 pp at t = 6.27. The largest held-out bucket is weeks 5–9.
+
+### Four bugs in the analysis code
+
+1. **Pick-cost lookup compared a float ADP against integer bucket edges**, so an
+   ADP of 48.1 fell between the 37–48 and 49–60 buckets and was charged
+   **nothing** — 8% of all picks. The identical fix already existed in a later
+   script and had never been backported, which is exactly how it survived.
+2. **Season totals counted NFL weeks 17–18**, which this league does not play,
+   inflating the pick-value curve ~4% at the top and ~8% in round two.
+3. **A non-deterministic group-by** let floating-point summation order drift
+   prior-season scoring by ~1e-15 — enough to flip a ridge alpha, so results
+   were not bit-reproducible.
+4. **Nine scripts wrote to a cwd-relative output path**, silently writing to a
+   stray directory after the repository was restructured.
+
+### What survived
+
+Survivorship bias (2.0% of drafted players fail to join, worth 0.22 points),
+mean-versus-median pick cost, 5% trimming, and — importantly — the market
+increment, which held against both a 47-feature strengthened baseline and a
+hindsight-fitted ceiling. Replacement level was also *measured* rather than
+assumed: streaming actually lands at the **56.3rd percentile** of weekly
+starters, not the median.
 
 ---
 
 ## 15. Benchmark methodology
 
-Weekly start/sit rules, 1,717 pair-seasons, all decisions locked pregame:
+Weekly start/sit rules, 1,717 pair-seasons, decisions locked pregame:
 
-| Decision rule | pts/season | vs always-QB1 | accuracy |
+| Decision rule | pts/season | vs always-QB1 | Accuracy |
 |--------------|-----------|---------------|----------|
-| always QB1 | 327.3 | — | 59.84% |
+| Always QB1 | 327.3 | — | 59.84% |
 | ADP consensus | 327.3 | +0.0 | 59.84% |
-| recent form | 327.8 | +0.5 | 60.41% |
-| market | 328.0 | +0.6 | 60.41% |
-| **model** | **332.2** | **+4.9** | **62.89%** |
-| oracle | 367.9 | +40.5 | 100% |
+| Recent form | 327.8 | +0.5 | 60.41% |
+| Market | 328.0 | +0.6 | 60.41% |
+| **Model** | **332.3** | **+5.0** | **62.91%** |
+| Oracle | 367.9 | +40.5 | 100% |
 
-**The model captures 12.0% of the available upside.** [evidence]
+The model captures **12.3%** of available upside. "Start your better preseason
+quarterback" is already right 59.8% of the time.
 
-Note that "always start your better preseason quarterback" is already right
-59.8% of the time. Sophistication buys three percentage points.
+**Streaming deserves emphasis.** It never had a losing season across the
+backtest while *every* drafted strategy did, and it beat drafting a single
+mid-priced quarterback outright.
 
-**Streaming deserves separate emphasis.** It never had a losing season across
-the backtest (worst +11.4, sd 20.3) while *every* drafted strategy did, and it
-beat drafting a single mid-priced quarterback outright (36.3 vs 12.2). For a
-manager who dislikes variance, streaming is the quietly strong option. [evidence]
-
-**Benchmark limitation:** CBS and FantasyPros publish current rankings but no
-accessible historical archive, so they cannot be scored over past seasons.
-Preseason ADP served as the historical consensus benchmark; CBS is compared
-directly on the 2026 board.
+**Benchmark limitation:** CBS publishes no historical archive — confirmed at
+runtime, where the 2022/2025/2026 URLs return an identical 77-row table. A
+documented consensus proxy was necessary. Note its r = 0.867 correlation with
+the 2026 CBS board is *not* strong validation: raw ADP alone achieves 0.845, so
+the proxy adds 0.013 and is merely ADP-shaped.
 
 ---
 
@@ -413,55 +439,39 @@ directly on the 2026 board.
 
 | Limitation | Effect |
 |-----------|--------|
-| **8-season window** (user decision) | Thin for interaction terms; mitigated with ridge, archetype-level effects, split-half testing |
-| **Starter identification excluded** | Panel is "given he started"; deployment needs depth-chart/injury logic |
-| **Pairs evaluated are all eligible pairs** | Measures the average pair; §17 addresses whether selection helps |
-| **No historical player props** | Prop features are forward-only; prop history begins 2023-05, covering 3 of 8 backtest seasons |
-| **Prediction markets unbacktestable** | No free price archive anywhere |
-| **Replacement = weekly median** | A sharper streamer raises the baseline and shrinks the measured gain |
-| **Injuries not modelled explicitly** | Appear implicitly as QB1 failure — precisely where the value is |
-| **Insurance premium is interpolated** | An estimate, not a measurement; §17 shows the 2026 ranking is not robust to it |
-| **Weather data 38–75% populated** | The largest scheduling effect is the least reliably available |
+| Eight-season window | Thin for interactions; mitigated with ridge, archetype-level effects, split-half and hierarchical testing |
+| Starter identification excluded | Panel is "given he started"; deployment needs depth-chart/injury logic |
+| Closing lines only | No opening line exists in the archive; managers set lineups earlier |
+| All eligible pairs, not selected pairs | Measures the average pair; selection was never shown to add value |
+| No historical player props | Prop features are forward-only |
+| Prediction markets unbacktestable | No free price archive exists |
+| Weather 38–75% populated | Missingness is benign (2,652 of 2,654 readings are outdoor games) but coverage is uneven |
+| Six test seasons | Standard errors are large; several strategy differences are not distinguishable |
 
 ---
 
 ## 17. Findings that contradict the thesis
 
-Collected deliberately, since this is where the project's value lies.
+1. **Schedule complementarity does not exist to exploit** — weekly outcomes
+   correlate +0.006.
+2. **Opponent difficulty adds nothing once the market is known**, and almost
+   nothing without it.
+3. **QB-specific matchup effects do not replicate** — split-half r = +0.065,
+   and the hierarchical model cannot even identify the variance.
+4. **The draft-time schedule signal is ~0.39% of variance.**
+5. **The QB2 economics reverse under a valid comparison** — −10.6/season.
+6. **The insurance mechanism is refuted by its own data** — injuries explain
+   8.8% of it.
+7. **Nonlinearity does not help**; 83% of weekly variance is unforecastable
+   from this panel.
+8. **Advanced tracking data adds nothing** despite being highly stable.
+9. **The weather effect was mis-estimated** and is worth ≤0.66 points/season.
+10. **Two exploratory findings failed replication** — one SHAP interaction, one
+    late-season market concentration.
 
-1. **Schedule complementarity does not exist to be exploited.** Weekly outcomes
-   of two quarterbacks correlate at +0.006. [evidence]
-2. **Opponent difficulty adds nothing once you know the market**, and almost
-   nothing even without it (+0.06 pp). [evidence]
-3. **QB-specific matchup effects do not replicate** against the same
-   quarterback's own games (r = +0.065). [evidence]
-4. **The draft-time schedule signal is close to zero** — 0.39% of variance,
-   1.00 point per game between easiest and hardest thirds. [evidence]
-5. **The weekly decision is worth ~5 points a season**, 12% of the available
-   upside. [evidence]
-6. **Game competitiveness does not shift opportunity pregame.** Attempts are
-   flat across spread buckets. [evidence]
-7. **A whole tercile of playoff schedule is worth nothing measurable.**
-   Weeks 14–18 show no effect. [evidence]
-8. **The 2026 ranking is not robust.** Varying the two estimated inputs over a
-   reasonable range reorders it completely: [evidence]
-
-   | Assumption | Top pair | Best Allen pair rank |
-   |-----------|----------|---------------------|
-   | insurance ×0.0 | Josh Allen + Daniel Jones | 1 |
-   | insurance ×1.0 | Jalen Hurts + Jaxson Dart | 33 |
-   | pick cost ×0.5 | Josh Allen + Jaxson Dart | 1 |
-   | pick cost ×1.5 | Jaxson Dart + Daniel Jones | 123 |
-
-   The gaps between pairs are smaller than the uncertainty in the assumptions.
-   **This is the most important single caveat in the report.**
-
-9. **57.1% of pairs beat a single QB — barely better than a coin flip**, with
-   quartile outcomes from −6.5 to +21.9 points. [evidence]
-
-**What does *not* contradict the thesis:** carrying a second quarterback is
-still net positive (+9.7 to +30.1), and it meaningfully reduces downside. The
-practice is fine. The *reasoning* behind it was wrong.
+**What does not contradict it:** the market genuinely carries weekly
+information, and the weekly decision is genuinely worth ~5 points a season.
+Those are the only load-bearing positives left.
 
 ---
 
@@ -469,67 +479,52 @@ practice is fine. The *reasoning* behind it was wrong.
 
 | Decision | Status |
 |----------|--------|
-| Backtest window 2018–2025 | **Settled** by user; extended 2007–2025 available for robustness |
-| Sportsbook props ($99/mo) | **Adopted** by user; adapter built, awaiting `ODDS_API_KEY`. Covers only 3 of 8 backtest seasons — keep the prop layer additive |
-| Playoff weighting | **Resolved to zero** by evidence (§13) rather than by choice |
-| Insurance premium | **Open.** Interpolated from two Phase 6 anchors; drives the 2026 ranking and is its weakest link |
-| QB2 bye-week waiver strategy | **Open.** Shared-bye pairs are excluded rather than penalised numerically |
-| Starter identification | **Open.** Needs depth charts and injury reports before any live deployment |
-| Streaming realism | **Open.** Modelled as the weekly median starter; a real manager's waiver access may differ |
+| Backtest window 2018–2025 | Settled; extended 2007–2025 available |
+| Sportsbook props | **Not purchased.** Free-first, by decision |
+| Playoff weighting | **Resolved to zero** by evidence |
+| Insurance premium | **Retired** — the finding it was calibrated on is broken |
+| Starter identification | **Open** — needed before live deployment |
+| Opening vs closing lines | **Open** — the largest unresolved threat to the market finding |
 
 ---
 
 ## 19. Recommended next build phase
 
-**Verdict: MODIFY, leaning stop. Do not build the interactive tool (Phase 10).**
+**Verdict: stop.** Do not build the interactive tool.
 
-The case against it is straightforward. A tool's job would be to deliver the
-weekly start/sit recommendation and the pair ranking. The weekly
-recommendation is worth **+4.9 points per season** over a rule you can apply in
-your head ("start your better quarterback"), and the pair ranking **reorders
-completely** under reasonable changes to its own assumptions. Neither justifies
-a frontend.
+A tool's two jobs would be the weekly start/sit call — worth 5 points a season
+over a rule you apply in your head — and the pair ranking, now known to be
+negative. Neither justifies a frontend.
 
-What the research does support, in order of value per unit of effort:
+What the evidence supports:
 
-1. **A one-paragraph draft rule** (available now, no build required):
-   - Draft one quarterback you like, then take a cheap second one late.
-   - The second QB is worth more the *cheaper* your first one is — its job is
-     insurance, so pair it with the fragile starter, not the safe one.
-   - **Do not pay for schedule.** It is worth about one point per game between
-     schedule extremes and cannot be forecast in August anyway.
-   - Only hard constraint: **avoid a shared bye week.** That is the one piece of
-     genuine 2026-specific pair information that is both knowable and material.
-   - If you dislike variance, streaming is a legitimate choice — it never had a
-     losing season in the backtest.
+- **Draft one quarterback and do not draft a second.** Held at a fixed QB1, the
+  backup costs ~11 points a season at every price point tested.
+- **Use the roster spot on a skill position** — precisely the alternative the
+  backup was failing to beat.
+- **Do not pay for schedule.** One point per game between extremes, and
+  unforecastable in August.
+- **Cover the bye from the waiver wire.** Worth ~+1.0 points a season, and free.
+- **Consider streaming** if you dislike variance. It never had a losing season.
+- **The market is the one real weekly signal** — if you check anything on Sunday
+  morning, check your quarterback's implied team total.
+- **Do not spend another hour** on schedule modelling, matchup interactions, or
+  playoff weighting.
 
-2. **A thin weekly helper** — a script that prints the projection for your two
-   quarterbacks each week using implied team totals. This is where the +4.9
-   lives, it reuses `models/projection.py` unchanged, and it is perhaps an
-   hour's work. No UI.
-
-3. **Forward-collect what could not be backtested** — log Kalshi QB markets and
-   Odds API props weekly from Week 1. In a year there would be a prop price
-   history that does not exist today, and the one genuinely untested hypothesis
-   (that QB-level props beat game-level lines) could finally be evaluated.
-
-**What not to do:** do not spend effort refining the schedule model, the
-matchup interactions, or the playoff weighting. Those were tested carefully and
-found empty. The most valuable output of this project is knowing not to spend
-the next month on them.
+The most valuable output of this project is the list of things not to bother
+with — and the demonstration that a finding nobody attacks is not a finding.
 
 ---
 
 ## Reproducing
 
 ```bash
-python scripts/walk_one_qb_week.py 2024 11 "Josh Allen"   # leakage audit
-python scripts/phase2_signal.py            # feature signal
-python scripts/phase2b_schedule_test.py    # schedule + ceiling
-python scripts/phase2c_pair_value.py       # realistic pair value
-python scripts/phase3_scheduling.py        # scheduling effects
-python scripts/phase4_qb_matchup.py        # matchup granularity
-python scripts/phase6_draft_cost.py        # strategy economics
-python scripts/phase7_backtest.py          # decision-rule benchmarks
-python scripts/phase8_rank_2026.py         # 2026 board + sensitivity
+python qb-pairing/scripts/walk_one_qb_week.py 2024 11 "Josh Allen"   # leakage audit
+python qb-pairing/scripts/phase2_signal.py                # feature signal
+python qb-pairing/scripts/phase3_scheduling.py            # scheduling effects
+python qb-pairing/scripts/phase4_qb_matchup.py            # matchup granularity
+python qb-pairing/scripts/phase6_draft_cost.py            # economics (rank-matched)
+python qb-pairing/scripts/phase7_backtest.py              # decision-rule benchmarks
+python qb-pairing/scripts/wave1_hierarchical_matchup.py   # lme4, needs R
+python qb-pairing/scripts/wave2_skeptic_economics.py      # the attack that broke it
 ```
