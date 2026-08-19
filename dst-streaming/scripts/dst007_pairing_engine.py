@@ -108,7 +108,13 @@ def main() -> int:
               f"{r['p90']:>6.1f}{t12:>7.0%}{r['p_bust']:>7.0%}")
 
     adp = markets.load_ffc_adp(SEASON).filter(pl.col("position") == "DEF")
-    cost = {r["team"]: r["adp"] for r in adp.iter_rows(named=True)}
+    # FFC codes are not nflverse codes. Without the shared fixup, LAR never
+    # matched LA, so the Rams (ADP 118, the 4th-priciest defense on the board)
+    # were silently priced as an undrafted waiver-wire streamer - which both
+    # mispriced every Rams pair and inflated the streaming baseline in the
+    # marginal test below. Found by the DST-007 critic, 2026-08-19.
+    cost = {markets.TEAM_FIXUP.get(r["team"], r["team"]): r["adp"]
+            for r in adp.iter_rows(named=True)}
     teams = sorted(rows["team"].unique().to_list())
     print(f"\ndefenses with a 2026 ADP: {len(cost)} of {len(teams)}; "
           f"the rest are waiver-wire streamers")

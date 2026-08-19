@@ -267,3 +267,86 @@ the same place as the QB2 result by an entirely independent route.
 `DST_STREAMING_RESEARCH.md` written: pair table (W1-4, W1-6, cost), best
 overall / inexpensive / floor / ceiling, market signals, double-counting
 analysis, limitations and recommendations.
+
+---
+
+## Critic pass on DST_STREAMING_RESEARCH.md, 2026-08-19
+
+**33 claim groups covering 181 individual numbers checked; 14 corrections.**
+DST-002, DST-004 and DST-007 were re-run from scratch and all reproduce
+bit-identically. The PASS/MISMATCH table is now an appendix in the report.
+
+### A data bug in the pairing engine, found and fixed
+
+`dst007_pairing_engine.py` joined FFC ADP to nflverse team codes **without
+`markets.TEAM_FIXUP`**, so FFC `LAR` never matched nflverse `LA` and the Rams -
+a pick-118 defense, fourth-priciest on the board - sat in the free-streamer
+pool. That mispriced every Rams pair and inflated the streaming baseline in the
+marginal test. Repaired at source.
+
+**Second-defense gain: +1.47 (16 defenses) becomes +1.61, se 0.24, 95% CI
+[1.15, 2.07], positive for 17 of 17.** Only the ADP columns changed; every
+simulated quantity is byte-identical, which is how the effect was isolated.
+
+### The corrections that changed a claim
+
+| Claim | Was | Is |
+| --- | --- | --- |
+| Best model vs. the trivial rule | +0.00 pp | **-0.06 pp** |
+| Lines in weeks 8-18 | 8 of 158 | **12 of 165** |
+| New England in the top ten pairs | nine | **eight** |
+| Reliability bins containing the prediction | 21 of 23 | **22 of 23** |
+| CHI+NE gap to the best pair | 1.6 | **2.1** |
+| D/ST ADP span | picks 84-160 | **84.1-172.3** |
+| Alternative pick value | 3.9-9.6 over a season | **1.8-9.6 over weeks 1-16** |
+| Tails thin by | ~5 pp | **unsupported; sourced figure is 1-2 pp** |
+
+**The +0.00 pp was circular and is now stated properly.** The script picks the
+best model by pair accuracy, and the winner *is* M1 - a ridge fit on the single
+market variable, which ranks identically to the trivial rule by construction.
+Stated non-circularly, the best model that knows anything the rule does not
+(M5) scores 60.95% against 61.01%. **Every feature-adding model ranks worse
+than the thirty-second rule.** The conclusion is unchanged and slightly
+harsher than published.
+
+The component table also omitted safeties and blocked kicks (0.20 pts/game), so
+its rows summed to 6.09 against a panel mean of 6.28. Added.
+
+### The four challenges
+
+**Units in section 8 - the comparison could not be made, so one was built.**
+`dst008_pick_cost_six_weeks.py` rebuilds the pick-value curve truncated at week
+6 with replacement re-derived on six-week totals. A non-QB pick where defenses
+go returns **1.31-5.19 usable PAR over weeks 1-6**. The six-week share is
+**59.5%** of the sixteen-week value, not the 37.5% that naive proration would
+assume - it had to be computed. **The direction survives but was overstated,
+and reverses at the tail**: net -1.6 to -3.6 before pick 145, -1.1 at 145-156,
+**+0.3 after 157**. Still not clean: median usable PAR is 0.0 in every bucket,
+so it is a lottery mean against a near-certainty.
+
+**Floor versus ceiling verifies but is a model property, not a finding.**
+r(p10, p90) = 0.978, but p90 minus p10 is 28-36 for *all 496 pairs* - they are
+near-translates of one another. DST-006 has no defense-specific quality term,
+so the model **cannot express** a trade-off. Residual correlation after removing
+the mean is -0.17. The original claim was true but hollow.
+
+**The top ten is one defense plus a plateau.** Top ten span 2.3 points; the
+eight New England pairs span 1.1, which is the partner entire measurable
+contribution; the best NE-free pair is 1.9 back. Against a 33-point outcome
+width, choosing correctly within the top ten is worth about 7% of one pair own
+spread. **The practical value of the pair table is materially lower than
+presented**, and the report now says so.
+
+**P(top-12) is conservative, not optimistic - and it is the wrong statistic.**
+Shrinking the field to the 24 most-likely-rostered defenses *removes*
+competitors and raises P(top-12) by +8 pp. But if everyone streams on the same
+signal, the twelve started defenses are the twelve best matchups: the best
+matchup on the whole board is the week best defense **16% of the time** and
+beats the median streamed defense 64% of the time. Both tables added.
+
+### Verdict
+
+**Conclusions survive.** The market-is-everything finding is untouched and
+slightly harsher. The second-defense conclusion survives with a real magnitude
+and a documented exception after pick 157. The pair table stands, but its
+practical value is lower than first presented.

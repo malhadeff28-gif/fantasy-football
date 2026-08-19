@@ -90,3 +90,61 @@ understate. And **MAE is 57.4 against 58.7 for a naive ADP curve - a 2%
 improvement.** The distribution is the product; the point estimate is not
 sharper than the market. **A 25-point gap between two medians sits inside a
 57-point error bar**, which is the honest frame for every comparison above.
+
+---
+
+## Synthesis pass, 2026-08-19 - and a weakened conclusion
+
+`RB_RISK_UPSIDE_RESEARCH.md` written. Every figure was re-derived from the
+output CSVs, the panel parquet and a read-only rerun of the simulator rather
+than transcribed from the Wave 0 write-ups. **All RB-004 numbers reproduce
+exactly.** Thirteen discrepancies were found in the source documents and
+corrected; two of them matter.
+
+### 1. RB-003 named the wrong comparables
+
+The claim that two of thirty Montgomery comparables became lead backs cited
+**Ingram 2019 and Johnson 2020**. The two who actually reached 18-plus touches
+per game are **Javonte Williams 2025 and Aaron Jones 2024**; Ingram (15.4) and
+Johnson (16.1) both landed in the 13-18 band. Corrected counts: three of
+thirty finished top-12, seven of thirty top-24.
+
+### 2. The ranking is NOT invariant, contradicting its own table
+
+RB-003 stated that the ordering never changes across comparable-pool sizes.
+The table directly beneath it disagrees: on median comparable points **Swift
+leads Judkins at k = 30** (170 against 167), they tie at k = 45, and Swift ties
+Pollard at k = 15. **Only Montgomery in last place is invariant.**
+
+### 3. The raw comparables actually favour Swift
+
+A genuine addition, not a correction. On raw comparable finishes **Swift leads
+- 13 of 30 top-12, median RB16 - against Judkins at 10 of 30, median RB18.5.**
+The Judkins-first ranking comes from the ratio-mode role transfer applied to
+his larger prior role. That is the same instability the 89% resample figure
+measures, now surfacing in a second independent statistic.
+
+### Other corrections
+
+- The published nearest-comparable lists were **curated rather than k-nearest**,
+  and the omissions skew toward poor finishes while the inclusions skew toward
+  good ones. That is a selection bias in the direction of the conclusion.
+- RB-002 stayed/switched table does not reproduce: n = 349/115 and r =
+  0.801/0.665, not 350/114 and 0.798/0.671.
+- Best observed p is 0.008, not 0.009.
+- The red-zone carry share p of 0.993 contradicts its own column header,
+  where P(gain > 0) = 0.007.
+- Correlation with the baseline is 0.856-0.934, not the stated ~0.75.
+- Two undisclosed ambiguities now surfaced: two different P(top-5) definitions
+  are in use, and **2024 is the one backtest season where the simulator loses
+  to the ADP curve**.
+
+### Revised bottom line
+
+Judkins still has both the best floor and the best risk-adjusted ceiling under
+all six specifications - but at 89% confidence over Swift, inside a 57-point
+error bar, with the raw comparables pointing the other way and the ordering
+flipping at k = 30.
+
+**The only separation this work can defend is fading Montgomery.** Everything
+finer than that is inside the noise.
