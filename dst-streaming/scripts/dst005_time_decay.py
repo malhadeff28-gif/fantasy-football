@@ -472,39 +472,68 @@ def main() -> int:
     print("negative r there is the expected direction and |r| is the signal.")
 
     # ------------------------------------------------------------- plot
-    fig, ax = plt.subplots(1, 2, figsize=(13.5, 5.2))
+    fig, ax = plt.subplots(1, 3, figsize=(17, 5.0))
     cols = {"pre_def_dst": "#1f77b4", "pre_def_sting": "#2ca02c",
             "pre_opp_weak": "#d62728", "mkt": "#7f7f7f"}
+
+    # (a) raw week-by-week. One CI band only - three overlaid bands are unreadable
+    # and the honest message (single weeks are far too noisy to read) is carried
+    # by the one band that is drawn.
+    lo = np.array([boot_ci(pre["boot"]["pre_def_dst"][:, i])[0]
+                   for i in range(len(weeks))])
+    hi = np.array([boot_ci(pre["boot"]["pre_def_dst"][:, i])[1]
+                   for i in range(len(weeks))])
+    ax[0].fill_between(weeks, lo, hi, color=cols["pre_def_dst"], alpha=0.15, lw=0,
+                       label="95% CI, own D/ST rating")
     for c in ratings:
-        lo = np.array([boot_ci(pre["boot"][c][:, i])[0] for i in range(len(weeks))])
-        hi = np.array([boot_ci(pre["boot"][c][:, i])[1] for i in range(len(weeks))])
-        ls = "--" if c == "mkt" else "-"
-        ax[0].plot(weeks, pre["point"][c], ls, color=cols[c], lw=2, label=NICE[c])
-        if c != "mkt":
-            ax[0].fill_between(weeks, lo, hi, color=cols[c], alpha=0.13, lw=0)
+        ls, lw = ("--", 1.8) if c == "mkt" else ("-", 1.6)
+        ax[0].plot(weeks, pre["point"][c], ls, color=cols[c], lw=lw, label=NICE[c])
     f = fit_half_life(weeks, pre["point"]["pre_def_dst"], n_wk)
     if f["exp0"] is not None:
-        ax[0].plot(weeks, _exp0(weeks, *f["exp0"]), ":", color="k", lw=1.4,
+        ax[0].plot(weeks, _exp0(weeks, *f["exp0"]), ":", color="k", lw=1.8,
                    label=f"exp fit, half-life {f['half_life']:.1f} wk")
     ax[0].axhline(0, color="k", lw=0.8)
-    ax[0].axvspan(0.5, 6.5, color="gold", alpha=0.15, zorder=0)
-    ax[0].text(3.5, ax[0].get_ylim()[1] * 0.94, "weeks 1-6", ha="center", fontsize=9)
+    ax[0].axvspan(0.5, 6.5, color="gold", alpha=0.18, zorder=0)
+    ax[0].text(3.5, 0.42, "weeks 1-6", ha="center", fontsize=9)
+    ax[0].set_ylim(-0.2, 0.46)
     ax[0].set_xlabel("week of season")
     ax[0].set_ylabel("corr(frozen preseason rating, D/ST points)")
-    ax[0].set_title("DST-005a  preseason knowledge decays week by week")
-    ax[0].legend(fontsize=7.5, loc="lower left")
+    ax[0].set_title("(a) preseason knowledge, week by week")
+    ax[0].legend(fontsize=7, loc="lower left")
     ax[0].set_xticks(range(1, MAX_WEEK + 1, 2))
 
+    # (b) the readable version of the same evidence
+    xs = np.arange(len(buckets))
+    wid = 0.9 / len(ratings)
+    for i, c in enumerate(ratings):
+        rs = [r for r in brows if r["rating"] == c]
+        v = [r["r"] for r in rs]
+        e = [[r["r"] - r["r_lo"] for r in rs], [r["r_hi"] - r["r"] for r in rs]]
+        ax[1].bar(xs + (i - (len(ratings) - 1) / 2) * wid, v, wid,
+                  yerr=e, capsize=3, color=cols[c], label=c,
+                  error_kw={"lw": 1, "ecolor": "0.3"})
+    ax[1].axhline(0, color="k", lw=0.8)
+    ax[1].set_xticks(xs)
+    ax[1].set_xticklabels([f"W{a}-{b}" for a, b in buckets])
+    ax[1].set_ylabel("corr(rating, D/ST points)")
+    ax[1].set_title("(b) pooled by window, with 95% CI")
+    ax[1].legend(fontsize=7.5)
+
+    # (c) in-season. Opponent offence is sign-flipped so all three curves are
+    # "more of this rating means more D/ST points".
     for c, col in zip(curves, ["#1f77b4", "#9467bd", "#d62728"]):
+        s = -1.0 if c["r"][0] < 0 else 1.0
         lo = np.array([boot_ci(c["boot"][:, j])[0] for j in range(len(GAPS))])
         hi = np.array([boot_ci(c["boot"][:, j])[1] for j in range(len(GAPS))])
-        ax[1].plot(c["gaps"], c["r"], "-o", ms=3.5, color=col, lw=2, label=c["label"])
-        ax[1].fill_between(c["gaps"], lo, hi, color=col, alpha=0.13, lw=0)
-    ax[1].axhline(0, color="k", lw=0.8)
-    ax[1].set_xlabel("gap between rating and outcome (games)")
-    ax[1].set_ylabel("corr(rating, outcome)")
-    ax[1].set_title("DST-005b  in-season knowledge, N games ago")
-    ax[1].legend(fontsize=7.5)
+        lab = c["label"] + (" (sign flipped)" if s < 0 else "")
+        ax[2].plot(c["gaps"], s * c["r"], "-o", ms=3.5, color=col, lw=2, label=lab)
+        ax[2].fill_between(c["gaps"], np.minimum(s * lo, s * hi),
+                           np.maximum(s * lo, s * hi), color=col, alpha=0.13, lw=0)
+    ax[2].axhline(0, color="k", lw=0.8)
+    ax[2].set_xlabel("gap between rating and outcome (games)")
+    ax[2].set_ylabel("|corr(rating, outcome)|")
+    ax[2].set_title("(c) in-season knowledge, N games ago")
+    ax[2].legend(fontsize=7.5)
     fig.tight_layout()
     fig.savefig(out / "dst005_time_decay.png", dpi=140)
     plt.close(fig)

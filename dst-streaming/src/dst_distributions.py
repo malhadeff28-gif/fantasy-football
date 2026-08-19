@@ -20,11 +20,14 @@ own and the components are recombined, because:
 Components are NOT independent - a shutout comes with sacks and interceptions
 attached (corr(sacks, points allowed) = -0.36, corr(INT, def TD) = +0.31).
 Sampling them independently would throw away the joint upper tail, which is the
-only part a streamer cares about. A Gaussian copula fitted on training-set
-normal scores puts the dependence back with no extra modelling assumptions
-about the marginals. `dst006_distributions.py` reports the independent variant
-side by side so the copula has to earn its place out of sample rather than by
-assertion.
+only part a streamer cares about. Dependence is restored by resampling whole
+rows of the training PIT matrix: each simulated game reuses the relative
+position a real game occupied inside every one of its own marginals at once.
+That is an empirical copula, it needs less code than a Gaussian one, and it
+keeps joint-tail behaviour a Gaussian copula cannot represent. Out of sample it
+beats both the Gaussian and the independent version on CRPS and on every
+calibration check (DST-006), which is why it is the default rather than an
+assumption.
 
 Public API:
     fit(train_df)                    -> DstSim
@@ -66,14 +69,11 @@ NB_COMPONENTS = ("def_sacks",)      # only sacks are meaningfully overdispersed
 BUST = 2.0
 SPIKE = 14.0
 
-# Seasons are not exchangeable. Sacks and turnovers drift down slowly across
-# 2018-2025, so equal-weighting an eight-year training window makes a
-# walk-forward model about +0.3 points optimistic and under-states P(bust) by
-# roughly 3 pp. Training rows are therefore down-weighted exponentially with
-# age. HALF_LIFE_SEASONS was set after seeing that bias out of sample, not
-# before - dst006_distributions.py scores the weighted and unweighted variants
-# side by side so the cost of that choice is visible.
-HALF_LIFE_SEASONS = 3.0
+# Default dependence handling. "empirical" resamples whole rows of the training
+# PIT matrix, which reproduces joint-tail behaviour a Gaussian copula cannot and
+# needs less code than one; "gaussian" and "independent" exist so the choice is
+# scored out of sample in dst006_distributions.py rather than asserted.
+COPULA = "empirical"
 
 # Tier map taken by calling shared scoring, never by re-listing thresholds here,
 # so the league definition cannot silently drift between modules.
@@ -91,10 +91,11 @@ class DstSim:
     pa_beta: np.ndarray = None
     pa_resid: np.ndarray = None                      # sorted residual pool
     misc_pool: np.ndarray = None                     # safety / blocked-kick pts
-    chol: np.ndarray = None                          # copula, cholesky of corr
+    u_pool: np.ndarray = None                        # training PIT, n_train x k
+    chol: np.ndarray = None                          # gaussian copula only
     order: tuple = ()                                # copula column order
     market_mean: float = 0.0
-    independent: bool = False
+    copula: str = COPULA
 
 
 def _prep(df: pl.DataFrame) -> pl.DataFrame:
@@ -114,19 +115,21 @@ def _design(x: np.ndarray, centre: float, use_market: bool) -> np.ndarray:
     return np.ones((len(x), 1))
 
 
-def fit(train: pl.DataFrame, independent: bool = False,
-        half_life: float | None = HALF_LIFE_SEASONS) -> DstSim:
+def fit(train: pl.DataFrame, copula: str = COPULA,
+        half_life: float | None = None) -> DstSim:
     """Fit every component on `train` only. No row from a later week is used.
 
-    `half_life` in seasons for the recency weight; None weights every season
-    equally.
+    copula: "empirical" | "gaussian" | "independent".
+    half_life: seasons, for an exponential recency weight on training rows.
+        None weights every season equally, which is the default because the
+        weighted variant was measured and changed nothing (see DST-006).
     """
     import statsmodels.api as sm
 
     t = _prep(train)
     x = t[MARKET].to_numpy().astype(float)
     centre = float(x.mean())
-    sim = DstSim(market_mean=centre, independent=independent)
+    sim = DstSim(market_mean=centre, copula=copula)
     rng = np.random.default_rng(7)
 
     s = t["season"].to_numpy().astype(float)
@@ -168,22 +171,25 @@ def fit(train: pl.DataFrame, independent: bool = False,
     sim.misc_pool = rng.choice(t["misc_pts"].to_numpy().astype(float),
                                size=t.height, p=p)
 
-    # Gaussian copula on randomised PIT normal scores. Unweighted: the drift is
-    # in the component levels, not in how the components hang together.
+    # Training PIT matrix: where each observed game sat inside its own fitted
+    # marginal. Randomised PIT for the counts, rank PIT for the points-allowed
+    # residual. Unweighted - any drift is in the component levels, not in how
+    # the components hang together.
     sim.order = tuple(COUNTS) + ("pa",)
     mu = _means(sim, x)
-    z = []
+    cols = []
     for name in COUNTS:
         y = t[name].fill_null(0).to_numpy().astype(float)
         d = _count_dist(sim, name, mu[name])
         lo, hi = d.cdf(y - 1), d.cdf(y)
-        z.append(stats.norm.ppf(np.clip(lo + rng.random(len(y)) * (hi - lo),
-                                        1e-6, 1 - 1e-6)))
-    u = (stats.rankdata(resid) - 0.5) / len(resid)
-    z.append(stats.norm.ppf(u))
-    Z = np.column_stack(z)
-    C = np.eye(len(sim.order)) if independent else np.corrcoef(Z.T)
-    sim.chol = np.linalg.cholesky(C + 1e-8 * np.eye(len(C)))
+        cols.append(lo + rng.random(len(y)) * (hi - lo))
+    cols.append((stats.rankdata(resid) - 0.5) / len(resid))
+    sim.u_pool = np.clip(np.column_stack(cols), 1e-6, 1 - 1e-6)
+
+    if copula == "gaussian":
+        Z = stats.norm.ppf(sim.u_pool)
+        C = np.corrcoef(Z.T)
+        sim.chol = np.linalg.cholesky(C + 1e-8 * np.eye(len(C)))
     return sim
 
 
@@ -210,8 +216,14 @@ def _simulate(sim: DstSim, week: pl.DataFrame, n_sims: int,
     mu = _means(sim, x)
     k = len(sim.order)
 
-    Z = rng.standard_normal((n_sims * n, k)) @ sim.chol.T
-    U = np.clip(stats.norm.cdf(Z), 1e-9, 1 - 1e-9).reshape(n_sims, n, k)
+    if sim.copula == "empirical":
+        U = sim.u_pool[rng.integers(0, len(sim.u_pool), n_sims * n)]
+    elif sim.copula == "gaussian":
+        Z = rng.standard_normal((n_sims * n, k)) @ sim.chol.T
+        U = stats.norm.cdf(Z)
+    else:
+        U = rng.random((n_sims * n, k))
+    U = np.clip(U, 1e-9, 1 - 1e-9).reshape(n_sims, n, k)
 
     total = np.zeros((n_sims, n))
     for j, name in enumerate(COUNTS):

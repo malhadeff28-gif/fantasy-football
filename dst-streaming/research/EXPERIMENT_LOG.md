@@ -82,3 +82,63 @@ modelling was fitted, precisely so the result could not be rationalised
 afterwards. The consequence is constructive rather than defeatist: the pairing
 engine should rank matchups by opponent implied total and spend its effort on
 distributions, bye structure and draft cost, where genuine decisions remain.
+
+---
+
+## DST-004 - does the opposing quarterback add anything?
+
+| ID | Question | Result | Effect | Verdict |
+| --- | --- | --- | --- | --- |
+| DST-004 | Does opposing-QB identity beat team-level offence? | No | +0.10 pp | **REJECT** |
+| DST-004b | Do QB traits correlate with D/ST outcomes? | Barely | best r = 0.030 | **REJECT** |
+| DST-004c | Does the proposed interaction exist? | Detectable, negligible | 0.17% of baseline error | **UNCERTAIN** |
+
+This is the hypothesis the brief emphasised most: that a defense facing a
+turnover-prone or sack-prone quarterback is a better start than the
+team-level matchup alone suggests. Panel of 4,036 defense-weeks (95.6%
+retained after joining each defense to the quarterback it faced, with all
+QB features strictly prior).
+
+| Feature set | MAE | Pair accuracy |
+| --- | --- | --- |
+| **market only (opponent implied total)** | **4.127** | **60.81%** |
+| baseline (market + opponent offence + home) | 4.130 | 60.66% |
+| baseline + opposing QB | 4.092 | 60.77% |
+| opposing QB only | 4.152 | 57.92% |
+
+**Adding the opposing quarterback is worth +0.10 pp**, and the single market
+variable still beats the model that knows who the quarterback is. A model
+built only on quarterback traits reaches 57.92%, closer to a coin flip than
+to the market.
+
+Correlations with the residual from the team-level baseline - what the
+quarterback adds beyond who he plays for - are all negligible: sack rate
+0.030, games of experience -0.026, fantasy form 0.020, interception rate
+0.016, fumble rate -0.012. For scale, implied team total correlates 0.150
+with the QB-side residual in the other lab.
+
+### The interaction search
+
+Every pairwise product was tested rather than only the one the brief
+proposed, so the winner is judged against the whole search. The proposed
+combination - strong pass rush plus a poor pressure-to-sack profile plus
+elevated interception expectation - **did not win**. The best product was
+opponent generosity times the defence own interception form, at +0.0070 MAE.
+
+Against a max-statistic permutation null (target shuffled within week, best
+of the entire search recomputed each time) the null averaged +0.0033 and
+peaked at +0.0059, so the observed value cleared it in 10 of 10 draws.
+
+**Two honest caveats that make this UNCERTAIN rather than KEEP.** Ten
+permutations resolve a p-value no finer than 0.1, so p = 0.000 overstates
+what was actually measured. And the effect is **0.17% of baseline error** -
+detectable is not the same as useful. Given DST-002 already showed the
+trivial rule cannot be beaten, an interaction worth a thousandth of a
+fantasy point does not change any decision.
+
+### Consequence
+
+Three independent routes - defensive form, opponent offence quality, and now
+opposing-QB identity - all fail to improve on knowing the opponent implied
+team total. That convergence is itself the finding: **for D/ST, the market
+has already priced everything a manager could look up.**

@@ -1,21 +1,21 @@
 """DST-006: full D/ST outcome distributions, and whether they are calibrated.
 
-Fit on seasons < S, simulate season S, never the reverse. Four candidate
+Fit on seasons < S, simulate season S, never the reverse. Six candidate
 distributions are scored against each other so the component design has to earn
 its place rather than be asserted:
 
-  A  components + Gaussian copula   the proposal (src/dst_distributions.py),
-                                    training rows down-weighted with a 3-season
-                                    half-life
-  B  components, independent        same marginals, dependence deleted
-  C  total only                     one regression on the total plus a residual
+  A  components + empirical copula  the proposal (src/dst_distributions.py):
+                                    whole rows of the training PIT matrix are
+                                    resampled, so joint tails survive
+  B  components + Gaussian copula   pairwise correlation only, no tail dependence
+  C  components, independent        dependence deleted entirely
+  D  total only                     one regression on the total plus a residual
                                     bootstrap - the "just fit the total" rival
-  D  climatology                    the pooled historical distribution, same for
+  E  climatology                    the pooled historical distribution, same for
                                     every defense every week - the no-information
                                     floor that anything must beat
-  E  A with equal season weights    what A looked like before the recency weight,
-                                    kept in the table so that choice is scored
-                                    rather than asserted
+  F  A, recency weighted            A with a 3-season half-life on training rows,
+                                    to test whether the level bias is drift
 
 Calibration is checked three ways, because each catches a different failure:
 randomised PIT uniformity (is the whole shape right), quantile coverage (are the
@@ -156,20 +156,23 @@ def main() -> int:
 
     # ------------------------------------------------- walk-forward simulation
     print(f"\n{BAR}\n DST-006: WALK-FORWARD OUT-OF-SAMPLE SIMULATION\n{BAR}")
-    variants = ["A copula", "B independent", "C total-only", "D climatology",
-                "E equal-weight"]
+    variants = ["A empirical", "B gaussian", "C independent", "D total-only",
+                "E climatology", "F recency-wt"]
+    MAIN = "A empirical"
+    FLOOR = "E climatology"
     acc = {v: {"crps": [], "pit": [], "top12": [], "top6": [],
-               "bust": [], "spike": []} for v in variants}
+               "bust": [], "spike": [], "mean": []} for v in variants}
     keep, actual, is12, is6, isb, issp = [], [], [], [], [], []
-    sim_pool, example = [], None
+    sim_pool, wkid, example = [], [], None
 
     for s in TEST:
         tr = d.filter(pl.col("season") < s)
         te = d.filter(pl.col("season") == s)
-        sim_a = dd.fit(tr)
-        sim_b = dd.fit(tr, independent=True)
-        sim_e = dd.fit(tr, half_life=None)
-        mod_c = fit_total_only(tr)
+        fits = {"A empirical": dd.fit(tr, "empirical"),
+                "B gaussian": dd.fit(tr, "gaussian"),
+                "C independent": dd.fit(tr, "independent"),
+                "F recency-wt": dd.fit(tr, "empirical", half_life=3.0)}
+        mod_d = fit_total_only(tr)
         clim = tr["dst_points"].to_numpy().astype(float)
         for (_, wkno), wk in te.group_by(["season", "week"], maintain_order=True):
             seed = int(s * 100 + wkno)
@@ -182,14 +185,17 @@ def main() -> int:
             is6.append((rk <= 6).astype(float) if n >= 6 else np.full(n, np.nan))
             isb.append((y <= dd.BUST).astype(float))
             issp.append((y >= dd.SPIKE).astype(float))
+            wkid.append(np.full(n, seed))
 
-            ens = {}
-            frm, ens["A copula"] = dd.distributions(sim_a, wk, N_SIMS, seed, True)
-            _, ens["B independent"] = dd.distributions(sim_b, wk, N_SIMS, seed, True)
-            ens["C total-only"] = sim_total_only(mod_c, wk, N_SIMS, rng)
-            ens["D climatology"] = rng.choice(clim, size=(N_SIMS, n))
+            ens, frm = {}, None
+            for v, sm in fits.items():
+                f, ens[v] = dd.distributions(sm, wk, N_SIMS, seed, True)
+                if v == MAIN:
+                    frm = f
+            ens["D total-only"] = sim_total_only(mod_d, wk, N_SIMS, rng)
+            ens[FLOOR] = rng.choice(clim, size=(N_SIMS, n))
             keep.append(frm)
-            sim_pool.append(ens["A copula"][::30].ravel())
+            sim_pool.append(ens[MAIN][::30].ravel())
             if (s == 2024 and wkno == 5) or example is None:
                 example = (wk, frm)
 
@@ -197,6 +203,7 @@ def main() -> int:
                 rank = (-S).argsort(axis=1).argsort(axis=1) + 1
                 acc[v]["crps"].append(crps(S, y))
                 acc[v]["pit"].append(pit(S, y, rng))
+                acc[v]["mean"].append(S.mean(axis=0))
                 acc[v]["top12"].append((rank <= 12).mean(axis=0) if n >= 12
                                        else np.full(n, np.nan))
                 acc[v]["top6"].append((rank <= 6).mean(axis=0) if n >= 6
@@ -214,13 +221,13 @@ def main() -> int:
 
     # -------------------------------------------------- headline comparison
     print(f"\n{BAR}\n DST-006: WHICH DISTRIBUTION IS BEST OUT OF SAMPLE\n{BAR}")
-    base = float(np.mean(P["D climatology"]["crps"]))
+    base = float(np.mean(P[FLOOR]["crps"]))
     print(f"{'variant':<16}{'CRPS':>8}{'skill':>8}{'KS(PIT)':>9}{'p(KS)':>8}"
           f"{'Brier12':>9}{'BSS12':>8}{'AUC12':>8}{'Brier bust':>12}")
     print("-" * 90)
     rows = []
     m12 = np.isfinite(A["t12"])
-    b12_clim = float(np.mean((P["D climatology"]["top12"][m12] - A["t12"][m12]) ** 2))
+    b12_clim = float(np.mean((P[FLOOR]["top12"][m12] - A["t12"][m12]) ** 2))
     for v in variants:
         c = float(np.mean(P[v]["crps"]))
         ks = stats.kstest(P[v]["pit"], "uniform")
@@ -236,6 +243,51 @@ def main() -> int:
                      "auc_top12": a12, "brier_bust": bb})
     print("\nskill / BSS are versus climatology; positive means better. KS p above")
     print("0.05 means the PIT is not distinguishable from uniform, i.e. calibrated.")
+
+    # -------------------------------------------- paired CRPS, with uncertainty
+    print(f"\n{BAR}\n DST-006: IS THE CRPS GAP REAL? (paired, clustered by week)\n{BAR}")
+    W = cat(wkid)
+    uw, widx = np.unique(W, return_inverse=True)
+    grp = [np.where(widx == g)[0] for g in range(len(uw))]
+    print(f"{'variant':<16}{'CRPS - CRPS(A)':>17}{'95% CI':>22}{'P(worse than A)':>18}")
+    print("-" * 74)
+    for v in variants:
+        if v == MAIN:
+            continue
+        dlt = P[v]["crps"] - P[MAIN]["crps"]
+        per = np.array([dlt[g].sum() for g in grp])
+        cnt = np.array([len(g) for g in grp], float)
+        bt = np.empty(2000)
+        for i in range(2000):
+            p = RNG.integers(0, len(grp), len(grp))
+            bt[i] = per[p].sum() / cnt[p].sum()
+        lo, hi = np.percentile(bt, [2.5, 97.5])
+        print(f"{v:<16}{dlt.mean():>+17.4f}   [{lo:+.4f},{hi:+.4f}]"
+              f"{float(np.mean(bt > 0)):>18.3f}")
+        next(r for r in rows if r["variant"] == v).update(
+            {"dcrps_vs_main": float(dlt.mean()), "dcrps_lo": float(lo),
+             "dcrps_hi": float(hi), "p_worse_than_main": float(np.mean(bt > 0))})
+    print("\nPositive means worse than variant A. A CI that straddles zero means")
+    print("the two distributions are not distinguishable on this sample.")
+
+    # ------------------------------------------------------- level diagnostic
+    print(f"\n{BAR}\n DST-006: IS THE LEVEL RIGHT? (mean simulated - mean actual)\n{BAR}")
+    print(f"{'variant':<16}{'bias (pts)':>12}{'actual mean':>14}{'sim mean':>11}"
+          f"{'MAE':>8}")
+    print("-" * 64)
+    for v in variants:
+        mu = float(np.mean(P[v]["mean"]))
+        mae = float(np.mean(np.abs(P[v]["mean"] - A["y"])))
+        print(f"{v:<16}{mu - A['y'].mean():>+12.3f}{A['y'].mean():>14.3f}"
+              f"{mu:>11.3f}{mae:>8.3f}")
+        next(r for r in rows if r["variant"] == v).update(
+            {"mean_bias": mu - float(A["y"].mean()), "mae": mae})
+    print("\nA positive bias makes every published percentile optimistic and")
+    print("under-states P(bust). Climatology carries most of it, and climatology")
+    print("cannot be wrong about anything except the level - so the bulk is the")
+    print("league simply scoring less in the test seasons than in the training")
+    print("ones, not a modelling error. Variant F tests whether down-weighting")
+    print("old seasons removes it.")
 
     # ------------------------------------------------------ quantile coverage
     print(f"\n{BAR}\n DST-006: PUBLISHED PERCENTILES, OUT-OF-SAMPLE COVERAGE\n{BAR}")
@@ -256,8 +308,8 @@ def main() -> int:
         print(line)
         cov_rows.append(rec)
     print(f"{'nominal':<16}" + "".join(f"{q:>11}%" for q in dd._PCTS))
-    print(f"\n(binomial SE at n={len(P['A copula']['pit'])} is about "
-          f"{np.sqrt(0.1 * 0.9 / len(P['A copula']['pit'])) * 100:.2f} pp at p10)")
+    print(f"\n(binomial SE at n={len(P[MAIN]['pit'])} is about "
+          f"{np.sqrt(0.1 * 0.9 / len(P[MAIN]['pit'])) * 100:.2f} pp at p10)")
 
     # ---------------------------------------------------------- reliability
     print(f"\n{BAR}\n DST-006: RELIABILITY OF THE EVENT PROBABILITIES (variant A)\n{BAR}")
@@ -267,7 +319,7 @@ def main() -> int:
                      ("bust", np.ones(len(A["y"]), bool)),
                      ("spike", np.ones(len(A["y"]), bool))):
         key = {"top12": "t12", "top6": "t6", "bust": "bust", "spike": "spike"}[ev]
-        rel = reliability(P["A copula"][ev][mask], A[key][mask], edges)
+        rel = reliability(P[MAIN][ev][mask], A[key][mask], edges)
         rel_all[ev] = rel
         print(f"\nP({ev}):")
         print(f"{'bin':<14}{'n':>7}{'predicted':>12}{'observed':>11}{'95% CI':>18}")
@@ -278,7 +330,7 @@ def main() -> int:
 
     # ---------------------------------------------------------------- plots
     fig, ax = plt.subplots(2, 2, figsize=(13, 9))
-    u = P["A copula"]["pit"]
+    u = P[MAIN]["pit"]
     ax[0, 0].hist(u, bins=20, range=(0, 1), color="#4c78a8",
                   edgecolor="white", density=True)
     ax[0, 0].axhline(1.0, color="k", ls="--", lw=1.2)
@@ -287,10 +339,11 @@ def main() -> int:
                        f"p={ks.pvalue:.3f})")
     ax[0, 0].set_xlabel("randomised PIT"); ax[0, 0].set_ylabel("density")
 
-    w, xs = 0.2, np.arange(len(dd._PCTS))
+    w = 0.9 / len(variants)
+    xs = np.arange(len(dd._PCTS))
     for i, v in enumerate(variants):
         vals = [np.mean(P[v]["pit"] <= q / 100) * 100 for q in dd._PCTS]
-        ax[0, 1].bar(xs + (i - 1.5) * w, vals, w, label=v)
+        ax[0, 1].bar(xs + (i - (len(variants) - 1) / 2) * w, vals, w, label=v)
     ax[0, 1].plot(xs, dd._PCTS, "k_", ms=34, mew=2, label="nominal")
     ax[0, 1].set_xticks(xs); ax[0, 1].set_xticklabels([f"p{q}" for q in dd._PCTS])
     ax[0, 1].set_ylabel("% of actuals below"); ax[0, 1].legend(fontsize=7.5)
@@ -310,9 +363,9 @@ def main() -> int:
         a.plot([0, 1], [0, 1], "k--", lw=1)
         a.set_xlabel("predicted"); a.set_ylabel("observed frequency")
         a.set_title(f"reliability: {ttl}"); a.legend(fontsize=8)
-        a.set_xlim(0, 1); a.set_ylim(0, 1)
+        a.set_xlim(0, 0.7); a.set_ylim(0, 0.7)
     fig.suptitle("DST-006 calibration, walk-forward 2020-2025 (variant A: "
-                 "components + copula)", fontsize=11)
+                 "components + empirical copula)", fontsize=11)
     fig.tight_layout()
     fig.savefig(out / "dst006_calibration.png", dpi=140)
     plt.close(fig)

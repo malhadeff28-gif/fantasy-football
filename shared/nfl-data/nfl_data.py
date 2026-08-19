@@ -136,6 +136,21 @@ def load_depth_charts(seasons: list[int], refresh: bool = False) -> pl.DataFrame
     return _cached(tag, lambda: nfl.load_depth_charts(seasons=seasons), refresh)
 
 
+def load_players(refresh: bool = False) -> pl.DataFrame:
+    """Master player table: gsis/pfr/espn ids, position, latest team, draft info."""
+    import nflreadpy as nfl
+
+    return _cached("players", lambda: nfl.load_players(), refresh)
+
+
+def load_rosters_weekly(seasons: list[int], refresh: bool = False) -> pl.DataFrame:
+    """Week-by-week roster membership. The authority on who is on which team."""
+    import nflreadpy as nfl
+
+    tag = f"rosters_weekly_{min(seasons)}_{max(seasons)}"
+    return _cached(tag, lambda: nfl.load_rosters_weekly(seasons=seasons), refresh)
+
+
 def bye_weeks(season: int) -> dict[str, int | None]:
     """Team to bye week for a season, derived from the schedule itself."""
     s = load_schedules().filter(
