@@ -1,0 +1,553 @@
+<title>The Two-Quarterback Question</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF1F5;
+  --ink:#101418; --ink-2:#39424E; --muted:#616B78; --rule:#DDE1E7; --rule-2:#C9D0D9;
+  --accent:#1F5F8B; --accent-soft:#E4EDF4;
+  --good:#2F7A55; --good-soft:#E3F0E9;
+  --bad:#B03A3A; --bad-soft:#F6E5E5;
+  --infer:#8A6A12; --infer-soft:#F5EDD9;
+  --shadow:0 1px 2px rgba(16,20,24,.05),0 8px 24px -12px rgba(16,20,24,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+    --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+    --accent:#6FB0DA; --accent-soft:#15242F;
+    --good:#5DBB8A; --good-soft:#132318;
+    --bad:#E08585; --bad-soft:#2A1717;
+    --infer:#DCB350; --infer-soft:#251E0E;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+  --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+  --accent:#6FB0DA; --accent-soft:#15242F;
+  --good:#5DBB8A; --good-soft:#132318;
+  --bad:#E08585; --bad-soft:#2A1717;
+  --infer:#DCB350; --infer-soft:#251E0E;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:68ch;margin-inline:auto}
+h1,h2,h3,.disp{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;text-wrap:balance}
+.mono,td.n,th.n,.fig{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+header.mast{border-bottom:1px solid var(--rule);margin-bottom:48px}
+.mast-in{max-width:1180px;margin:0 auto;padding:56px 24px 40px}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+h1{font-size:clamp(2.5rem,6vw,4.1rem);line-height:1.02;font-weight:800;letter-spacing:-.025em;margin:0 0 20px;max-width:16ch}
+.dek{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--ink-2);max-width:60ch;margin:0 0 32px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:18px}
+.meta b{color:var(--ink-2);font-weight:500}
+
+.verdict{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--bad);border-radius:4px;padding:26px 28px;margin:0 0 14px;box-shadow:var(--shadow)}
+.verdict .lab{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);margin:0 0 10px;font-weight:600}
+.verdict p{margin:0;font-size:1.12rem;color:var(--ink)}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;white-space:nowrap;vertical-align:2px}
+.chip.m{background:var(--good-soft);color:var(--good);border:1px solid color-mix(in srgb,var(--good) 30%,transparent)}
+.chip.r{background:var(--bad-soft);color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.chip.i{background:var(--infer-soft);color:var(--infer);border:1px solid color-mix(in srgb,var(--infer) 30%,transparent)}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+section{margin:64px 0 0}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-top:2px solid var(--ink);padding-top:12px;margin:0 0 8px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.08em;flex:none}
+h2{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.018em;margin:0}
+h3{font-size:1.12rem;font-weight:700;letter-spacing:-.01em;margin:38px 0 10px}
+p{margin:0 0 18px}
+.lede{font-size:1.1rem;color:var(--ink-2)}
+strong{font-weight:600}
+a{color:var(--accent)}
+
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:28px 0}
+.num{background:var(--surface);padding:20px 18px}
+.num .v{font-family:"IBM Plex Mono",monospace;font-size:1.85rem;font-weight:600;letter-spacing:-.02em;line-height:1.1;display:block;margin-bottom:6px}
+.num .k{font-size:12.5px;color:var(--muted);line-height:1.4;display:block}
+.num.pos .v{color:var(--good)} .num.neg .v{color:var(--bad)} .num.acc .v{color:var(--accent)}
+
+.tw{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:min(100%,520px)}
+caption{text-align:left;font-size:12.5px;color:var(--muted);padding:12px 16px 0;font-family:"IBM Plex Mono",monospace}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule)}
+thead th{font-family:"Bricolage Grotesque",sans-serif;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2);border-bottom:1px solid var(--rule-2)}
+td.n,th.n{text-align:right}
+tbody tr:last-child td{border-bottom:none}
+tr.hi td{background:var(--accent-soft)}
+tr.hi td:first-child{font-weight:600}
+tr.dim td{color:var(--muted)}
+.tag-y{color:var(--good);font-weight:600} .tag-n{color:var(--bad);font-weight:600}
+
+figure{margin:30px 0;background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:22px}
+figcaption{font-size:13px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+.fig-t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;margin:0 0 3px}
+.fig-s{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+.bars{display:grid;gap:7px}
+.bar-row{display:grid;grid-template-columns:minmax(112px,168px) 1fr auto;align-items:center;gap:12px}
+.bar-lab{font-size:13px;color:var(--ink-2);text-align:right;line-height:1.25}
+.bar-track{position:relative;height:19px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.bar-fill{position:absolute;top:0;bottom:0;left:0;background:var(--accent);border-radius:0 3px 3px 0}
+.bar-fill.g{background:var(--good)} .bar-fill.b{background:var(--bad)} .bar-fill.mut{background:var(--rule-2)}
+.bar-val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2);min-width:52px;text-align:right}
+.ref{position:absolute;top:0;bottom:0;width:2px;background:var(--ink);opacity:.55}
+
+.call{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;border-radius:0 4px 4px 0;margin:24px 0}
+.call p:last-child{margin-bottom:0}
+.call.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+.call .h{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:13.5px;margin:0 0 6px;letter-spacing:.01em}
+
+.inv{display:grid;gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:24px 0}
+.inv-row{background:var(--surface);padding:15px 18px;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:start}
+.inv-row .q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:14.5px;grid-column:2}
+.inv-row .a{font-size:14px;color:var(--ink-2);grid-column:2;margin:0}
+.inv-row .ix{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);grid-row:span 2;padding-top:3px}
+
+ul{margin:0 0 18px;padding-left:1.15em}
+li{margin-bottom:7px}
+hr.end{border:none;border-top:1px solid var(--rule);margin:56px 0 24px}
+.foot{font-size:13px;color:var(--muted)}
+code{font-family:"IBM Plex Mono",monospace;font-size:.87em;background:var(--surface-2);padding:1px 5px;border-radius:3px}
+@media (max-width:640px){
+  body{font-size:16px}
+  .bar-row{grid-template-columns:minmax(88px,120px) 1fr auto;gap:8px}
+  .bar-lab{font-size:12px}
+}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="kicker">Fantasy football research &middot; 12-team, 1 QB, standard scoring</p>
+    <h1>The Two-Quarterback Question</h1>
+    <p class="dek">Can two quarterbacks with complementary schedules beat one expensive quarterback? Nine phases of testing on eight seasons say no &mdash; but they also say something more useful about what a second quarterback is actually for.</p>
+    <div class="meta">
+      <span><b>Backtest</b> 2018&ndash;2025, walk-forward</span>
+      <span><b>Panel</b> 4,373 QB-weeks</span>
+      <span><b>Decisions scored</b> 49,026</span>
+      <span><b>Data cost</b> $0</span>
+      <span><b>Updated</b> 18 Aug 2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="col">
+
+  <div class="verdict">
+    <p class="lab">Verdict &mdash; stop</p>
+    <p>The mechanism the thesis proposed does not exist. Schedule complementarity is unmeasurable, opponent difficulty is worth almost nothing, and quarterbacks do not respond to defenses differently in any way that replicates. An earlier draft of this brief argued a second quarterback still paid for itself as insurance. <strong>An adversarial re-analysis broke that too</strong> &mdash; the apparent gain was an artefact of comparing strategies that did not share the same QB1. Held fixed, a second quarterback <strong>costs</strong> about 11.6 points a season.</p>
+  </div>
+  <div class="call warn" style="margin-top:14px">
+    <p class="h">Revised 18 August 2026</p>
+    <p>Sections 8 and 13 previously reported +9.7 and +30.1 points per season for carrying a second quarterback. Those figures were wrong and are retired. The correction, its cause, and two code bugs found alongside it are documented in <a href="#s14">&sect;14</a>. Earlier numbers are struck through rather than deleted.</p>
+  </div>
+  <p class="foot" style="margin-bottom:0">Every claim below is tagged <span class="chip m">measured</span> <span class="chip i">inferred</span> or <span class="chip r">rejected</span>. Nothing is asserted that a script in the repository doesn't reproduce.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>What was being tested</h2></div>
+    <p class="lede">The thesis decomposed into four independent claims. They did not survive equally.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Claim</th><th>Test</th><th>Result</th><th class="n">Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Schedules can be chosen to complement each other</td><td>Correlation of weekly outcomes across 2,163 pairs</td><td class="mono">r = +0.006</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr><td>The same opponent affects different QBs differently</td><td>Split-half reliability of per-QB matchup slopes</td><td class="mono">r = +0.065</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr><td>A manager can pick the right QB each week</td><td>Pairwise accuracy vs. always starting the better QB</td><td class="mono">62.9% vs 59.8%</td><td class="n"><span class="chip m">weak</span></td></tr>
+    <tr><td>Two cheap QBs can beat one expensive one on value</td><td>Net points above replacement, minus pick cost, QB1 held fixed</td><td class="mono">&minus;11.6 / season</td><td class="n"><span class="chip r">rejected</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>The fourth claim is the survivor, and it survives for a reason unrelated to the first three. That gap between <em>the strategy works</em> and <em>the strategy works for the stated reason</em> is the whole finding.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Everything that was tried</h2></div>
+    <p class="lede">Nine studies, each a runnable script. Listed with what it asked and what came back &mdash; including the ones that found nothing, which is most of them.</p>
+  </section>
+</div>
+
+<div class="inv">
+  <div class="inv-row"><span class="ix">01</span><span class="q">Can one QB-week be rebuilt from pregame data alone?</span><p class="a">Yes. Allen, 2024 Wk 11: projected 19.20, actual 23.98. Leakage audit passes &mdash; latest input dated six days before kickoff. The first attempt returned nothing because Buffalo was on bye, which confirmed bye handling falls out of the data model rather than needing a special case.</p></div>
+  <div class="inv-row"><span class="ix">02</span><span class="q">Does opponent difficulty predict anything?</span><p class="a">Barely. +0.06 pp of start/sit accuracy over recent form; &minus;0.01 pp once the betting market is present. A quality-controlled defensive rating that adjusts for which QBs each defense faced did not rescue it (MAE 6.023 either way).</p></div>
+  <div class="inv-row"><span class="ix">03</span><span class="q">Is the draft-day version any better?</span><p class="a">Worse. Defensive ratings persist year to year at r = 0.206. A prior-season rating explains 0.39% of QB variance. Easiest vs. hardest third of schedule: 1.00 point per game.</p></div>
+  <div class="inv-row"><span class="ix">04</span><span class="q">Which scheduling effects are real?</span><p class="a">Wind &ge;15 mph (&minus;1.61), home/away (~1.1 spread), indoors/outdoors (~1.1 spread). Not rest, not division games, not time of season. Weeks 14&ndash;18 show no effect at all.</p></div>
+  <div class="inv-row"><span class="ix">05</span><span class="q">Does game competitiveness shift opportunity?</span><p class="a">Not pregame. Pass and rush attempts are flat across spread buckets (32.4/32.6/32.1 and 3.7/3.7/3.7). Actual game script is enormous &mdash; losing big costs 3.81 points &mdash; but is not forecastable from the line.</p></div>
+  <div class="inv-row"><span class="ix">06</span><span class="q">Do QB archetypes respond to defenses differently?</span><p class="a">No, at any granularity. League-wide, archetype-level and per-QB matchup adjustments all scored worse than using no adjustment at all.</p></div>
+  <div class="inv-row"><span class="ix">07</span><span class="q">What is a second QB actually worth?</span><p class="a">+12.0 points a season against a single-QB manager who streams his bye &mdash; 25.4% of the perfect-foresight ceiling. Only 57.1% of pairs beat one QB.</p></div>
+  <div class="inv-row"><span class="ix">08</span><span class="q">Does it clear the pick and the bench slot?</span><p class="a"><strong>No.</strong> First reported as +9.7 and +30.1, then broken on re-analysis: those compared strategies with different QB1s. Holding QB1 fixed, a second quarterback costs 11.6 points a season, negative at all seven QB1 price points tested.</p></div>
+  <div class="inv-row"><span class="ix">10</span><span class="q">Do the surviving findings hold up when attacked?</span><p class="a">The economics did not. An adversarial pass reproduced every number exactly, then found the comparison itself was invalid, that no confidence interval had been reported, and two bugs in the pricing code. See <a href="#s14">&sect;14</a>.</p></div>
+  <div class="inv-row"><span class="ix">09</span><span class="q">Is the 2026 pair ranking trustworthy?</span><p class="a">No. It reorders completely when its two estimated inputs are varied over a reasonable range. Reported as the headline result rather than a footnote.</p></div>
+</div>
+
+<div class="col">
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Which inputs carry signal</h2></div>
+    <p>Each candidate feature was correlated against the <em>form residual</em> &mdash; what a quarterback scored minus his own eight-game average. Measuring against the residual rather than raw points stops a good quarterback on a good team from masquerading as a scheduling effect.</p>
+  </section>
+</div>
+
+<figure>
+  <p class="fig-t">The betting market is the only real weekly signal</p>
+  <p class="fig-s">Correlation with form residual &middot; 4,268 QB-weeks &middot; 2018&ndash;2025</p>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-lab">Implied team total</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">0.150</span></div>
+    <div class="bar-row"><span class="bar-lab">Game total</span><span class="bar-track"><span class="bar-fill" style="width:75.6%"></span></span><span class="bar-val">0.114</span></div>
+    <div class="bar-row"><span class="bar-lab">Home</span><span class="bar-track"><span class="bar-fill" style="width:47.3%"></span></span><span class="bar-val">0.071</span></div>
+    <div class="bar-row"><span class="bar-lab">Indoors</span><span class="bar-track"><span class="bar-fill" style="width:46.7%"></span></span><span class="bar-val">0.070</span></div>
+    <div class="bar-row"><span class="bar-lab">Opponent difficulty</span><span class="bar-track"><span class="bar-fill mut" style="width:45.2%"></span></span><span class="bar-val">0.068</span></div>
+    <div class="bar-row"><span class="bar-lab">Division game</span><span class="bar-track"><span class="bar-fill mut" style="width:20.7%"></span></span><span class="bar-val">&minus;0.031</span></div>
+    <div class="bar-row"><span class="bar-lab">Rest days</span><span class="bar-track"><span class="bar-fill mut" style="width:18.7%"></span></span><span class="bar-val">&minus;0.028</span></div>
+    <div class="bar-row"><span class="bar-lab">Spread magnitude</span><span class="bar-track"><span class="bar-fill mut" style="width:11.5%"></span></span><span class="bar-val">0.017</span></div>
+    <div class="bar-row"><span class="bar-lab">Rushing share</span><span class="bar-track"><span class="bar-fill mut" style="width:4.1%"></span></span><span class="bar-val">&minus;0.006</span></div>
+  </div>
+  <figcaption>Implied team total leads by more than double. Opponent difficulty &mdash; the input the entire pairing thesis rested on &mdash; sits below <em>whether the game is indoors</em>, and its contribution vanishes once the market is in the model. Grey bars are features that failed to earn a place in the final model.</figcaption>
+</figure>
+
+<div class="col">
+  <h3>Nested models, walk-forward</h3>
+  <p>Train on every season before <span class="mono">S</span>, test on <span class="mono">S</span>, for <span class="mono">S</span> = 2020&ndash;2025. Never in-sample; a random split over panel data would leak the future into the past.</p>
+</div>
+
+<div class="tw">
+<table>
+  <caption>Ridge regression &middot; 49,026 pairwise start/sit comparisons &middot; coin flip = 50%</caption>
+  <thead><tr><th>Model</th><th class="n">MAE</th><th class="n">RMSE</th><th class="n">R&sup2;</th><th class="n">Pair accuracy</th></tr></thead>
+  <tbody>
+    <tr class="dim"><td>M0 &middot; league mean</td><td class="n">6.560</td><td class="n">8.152</td><td class="n">0.000</td><td class="n">&mdash;</td></tr>
+    <tr><td>M1 &middot; form only</td><td class="n">6.048</td><td class="n">7.542</td><td class="n">0.144</td><td class="n">62.53%</td></tr>
+    <tr><td>M2 &middot; form + schedule</td><td class="n">6.028</td><td class="n">7.540</td><td class="n">0.145</td><td class="n">62.59%</td></tr>
+    <tr class="hi"><td>M3 &middot; form + market</td><td class="n">5.926</td><td class="n">7.396</td><td class="n">0.177</td><td class="n">63.99%</td></tr>
+    <tr><td>M4 &middot; form + market + schedule</td><td class="n">5.916</td><td class="n">7.400</td><td class="n">0.176</td><td class="n">63.98%</td></tr>
+    <tr><td>M5 &middot; M4 + venue context</td><td class="n">5.914</td><td class="n">7.394</td><td class="n">0.177</td><td class="n">64.07%</td></tr>
+    <tr><td>M6 &middot; M5 + QB &times; matchup</td><td class="n">5.918</td><td class="n">7.399</td><td class="n">0.176</td><td class="n">64.06%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>M1 &rarr; M2 is the schedule test: <strong>+0.06 percentage points</strong>. M3 &rarr; M4 is the same test with the market already present: <strong>&minus;0.01 pp</strong>. M5 &rarr; M6 adds interactions between play style and opponent, and makes the model <em>worse</em>. <span class="chip m">measured</span></p>
+  <p>Note also the ceiling. The best model reaches R&sup2; &asymp; 0.18. Weekly quarterback scoring is mostly irreducible noise, and no amount of feature engineering changed that.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>The complementarity that isn't there</h2></div>
+    <p>This is the measurement that ends the thesis rather than merely weakening it. If two quarterbacks' good and bad weeks could be made to offset, their outcomes would be negatively correlated. Across every eligible pair in eight seasons:</p>
+  </section>
+</div>
+
+<div class="nums">
+  <div class="num acc"><span class="v">+0.008</span><span class="k">Correlation of two QBs' pregame implied team totals</span></div>
+  <div class="num acc"><span class="v">+0.006</span><span class="k">Correlation of their actual weekly fantasy points</span></div>
+  <div class="num"><span class="v">2,163</span><span class="k">Pairs measured</span></div>
+  <div class="num"><span class="v">2.02<span style="font-size:.55em;color:var(--muted)"> vs 8.09</span></span><span class="k">Pregame matchup spread vs. actual outcome spread (SD)</span></div>
+</div>
+
+<div class="col">
+  <p>Both correlations are indistinguishable from zero. Quarterback outcomes are <em>already independent</em>. There is no correlation structure for a pairing model to discover, which means the diversification benefit of holding two quarterbacks is the same whichever two you hold. Choosing partners for complementary schedules adds nothing on top of that. <span class="chip r">rejected</span></p>
+  <div class="call warn">
+    <p class="h">Why this closes the question</p>
+    <p>A weak predictor can be improved with better features. An absent phenomenon cannot. The pregame matchup signal has a standard deviation of 2.02 fantasy points against outcome noise of 8.09 &mdash; it is trying to sort a distribution four times its own size.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>QB-specific matchup effects</h2></div>
+    <p>The most interesting hypothesis in the brief, and the one given the most careful test. Quarterbacks were clustered on measurable, prior-only play style into three archetypes that came out clean and recognisable.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>K-means on rushing share, average depth of target, pass volume, sack rate</caption>
+  <thead><tr><th>Archetype</th><th class="n">n</th><th class="n">Rush share</th><th class="n">aDOT</th><th class="n">Pass att</th><th>Exemplars</th></tr></thead>
+  <tbody>
+    <tr><td>Pocket, high volume</td><td class="n">1,840</td><td class="n">0.097</td><td class="n">7.15</td><td class="n">34.6</td><td>Goff, Mahomes, Cousins, Herbert</td></tr>
+    <tr><td>Downfield</td><td class="n">1,379</td><td class="n">0.143</td><td class="n">8.86</td><td class="n">33.3</td><td>Mayfield, Allen, Wilson, Stafford</td></tr>
+    <tr><td>Rushing</td><td class="n">1,049</td><td class="n">0.307</td><td class="n">8.08</td><td class="n">27.4</td><td>Jackson, Hurts, Fields</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>The archetypes are real. The matchup effects are not. Three levels of granularity were fitted and every one scored worse than applying no matchup adjustment at all:</p>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Matchup granularity</th><th class="n">MAE</th><th class="n">Pair accuracy</th><th class="n">vs. no adjustment</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>None</td><td class="n">5.9183</td><td class="n">64.17%</td><td class="n">&mdash;</td></tr>
+    <tr><td>League-wide</td><td class="n">5.9188</td><td class="n">64.07%</td><td class="n">+0.0006</td></tr>
+    <tr><td>Archetype</td><td class="n">5.9193</td><td class="n">64.18%</td><td class="n">+0.0010</td></tr>
+    <tr><td>Individual (per QB)</td><td class="n">5.9455</td><td class="n">63.67%</td><td class="n">+0.0273</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>The decisive diagnostic is split-half reliability. For 41 quarterbacks with 40+ games, matchup sensitivity was measured separately in two random halves of <em>their own games</em>. If it were a real trait, the halves would agree.</p>
+  <div class="nums">
+    <div class="num neg"><span class="v">r = 0.065</span><span class="k">Agreement between a QB's two halves &mdash; 0.4% of variance</span></div>
+    <div class="num"><span class="v">41</span><span class="k">Quarterbacks with enough games to test</span></div>
+  </div>
+  <p>A quarterback's apparent matchup sensitivity does not replicate against himself. Per-QB coefficients would be fitting noise, so they were rejected as unstable complexity. <span class="chip r">rejected</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Scheduling effects that are real</h2></div>
+    <p>Measured against the form residual with standard errors, because an effect smaller than its own noise is not an effect.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>Marked significant at |t| &ge; 2</caption>
+  <thead><tr><th>Effect</th><th class="n">Points</th><th class="n">t</th><th class="n">n</th><th class="n">Real?</th></tr></thead>
+  <tbody>
+    <tr><td>Wind &ge; 15 mph <span class="chip i">revised</span></td><td class="n">&minus;1.48</td><td class="n">&minus;2.53</td><td class="n">153 games</td><td class="n tag-y">yes</td></tr>
+    <tr><td>Away</td><td class="n">&minus;0.69</td><td class="n">&minus;4.11</td><td class="n">2,143</td><td class="n tag-y">yes</td></tr>
+    <tr><td>Indoors</td><td class="n">+0.65</td><td class="n">+2.88</td><td class="n">1,286</td><td class="n tag-y">yes</td></tr>
+    <tr class="dim"><td>Wind 8&ndash;14 mph <span class="chip r">broken</span></td><td class="n">&minus;0.45</td><td class="n">&minus;1.29</td><td class="n">1,033</td><td class="n tag-n">no</td></tr>
+    <tr><td>Outdoors</td><td class="n">&minus;0.47</td><td class="n">&minus;3.28</td><td class="n">2,982</td><td class="n tag-y">yes</td></tr>
+    <tr><td>Home</td><td class="n">+0.44</td><td class="n">+2.52</td><td class="n">2,125</td><td class="n tag-y">yes</td></tr>
+    <tr class="dim"><td>Short week (&le;4 days)</td><td class="n">+0.67</td><td class="n">+1.37</td><td class="n">260</td><td class="n tag-n">no</td></tr>
+    <tr class="dim"><td>Extra rest (9&ndash;13 days)</td><td class="n">&minus;0.61</td><td class="n">&minus;1.50</td><td class="n">337</td><td class="n tag-n">no</td></tr>
+    <tr class="dim"><td>Coming off bye</td><td class="n">&minus;0.59</td><td class="n">&minus;1.21</td><td class="n">214</td><td class="n tag-n">no</td></tr>
+    <tr class="dim"><td>Division game</td><td class="n">&minus;0.33</td><td class="n">&minus;1.65</td><td class="n">1,534</td><td class="n tag-n">no</td></tr>
+    <tr class="dim"><td>Weeks 14&ndash;18 (playoffs)</td><td class="n">&minus;0.02</td><td class="n">&minus;0.07</td><td class="n">1,176</td><td class="n tag-n">no</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>Three results worth stating plainly. <strong>Rest does not matter</strong> &mdash; including coming off a bye, which is slightly negative and contradicts common practice. <strong>Weeks 14&ndash;18 score like any other weeks</strong>, which settles the playoff-weighting question by evidence rather than by choice. And <strong>weather is real but far smaller than first reported</strong>. <span class="chip m">measured</span></p>
+  <div class="call warn">
+    <p class="h">The wind numbers were mis-estimated</p>
+    <p>The original figures were raw bucket means rather than contrasts, and their standard errors treated two quarterbacks in the same game as independent observations &mdash; so n = 304 QB-weeks was really <strong>153 games</strong>. Corrected, wind &ge; 15 mph is <strong>&minus;1.48 (t = &minus;2.53)</strong>, still real but weaker; <strong>wind 8&ndash;14 mph collapses to t = &minus;1.29 and is dropped</strong>. The claim that weather was the largest scheduling effect also fails: home field is +1.32 (t = 4.38) on the same sample and applies to <em>every</em> game rather than 7% of them.</p>
+    <p>It is knowable in advance &mdash; the betting total is 1.20 points lower in high-wind games, so the forecast was public &mdash; but frequency kills it. Wind &ge; 15 mph hits 7.1% of quarterback-weeks, and only 18.5% of within-week pairs are close enough for a 1.5-point tiebreak to change the decision. <strong>Upper bound: 0.66 points per season.</strong></p>
+  </div>
+
+  <h3>Game script: large, real, and useless</h3>
+  <p>The brief hypothesised that close games raise aggression and rushing opportunity. Pregame, they do not: pass and rush attempts are flat across spread buckets (32.4 / 32.6 / 32.1 and 3.7 / 3.7 / 3.7). But how a game <em>actually</em> unfolds matters enormously &mdash; losing big is worth &minus;3.81 points (t = &minus;17.8), winning big +2.07.</p>
+  <div class="call">
+    <p class="h">The clearest lesson in the project</p>
+    <p>Game script is one of the biggest effects measured anywhere here, and it is worth nothing on draft day or Sunday morning, because it cannot be forecast from the closing line. A large effect and a usable edge are different things.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>What the weekly decision is worth</h2></div>
+    <p>The operational core of the strategy: six start/sit rules, every decision locked before kickoff, run over 1,717 pair-seasons.</p>
+  </section>
+</div>
+
+<figure>
+  <p class="fig-t">Sophistication buys three percentage points</p>
+  <p class="fig-s">Points per season by decision rule &middot; vertical line marks always-start-QB1</p>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-lab">Always QB1</span><span class="bar-track"><span class="bar-fill mut" style="width:79.1%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">327.3</span></div>
+    <div class="bar-row"><span class="bar-lab">ADP consensus</span><span class="bar-track"><span class="bar-fill mut" style="width:79.1%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">327.3</span></div>
+    <div class="bar-row"><span class="bar-lab">Recent form</span><span class="bar-track"><span class="bar-fill mut" style="width:79.2%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">327.8</span></div>
+    <div class="bar-row"><span class="bar-lab">Betting market</span><span class="bar-track"><span class="bar-fill mut" style="width:79.3%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">328.0</span></div>
+    <div class="bar-row"><span class="bar-lab">Our model</span><span class="bar-track"><span class="bar-fill" style="width:80.3%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">332.2</span></div>
+    <div class="bar-row"><span class="bar-lab">Perfect foresight</span><span class="bar-track"><span class="bar-fill g" style="width:88.9%"></span><span class="ref" style="left:79.1%"></span></span><span class="bar-val">367.9</span></div>
+  </div>
+  <figcaption>Accuracy runs 59.84% (always QB1) &rarr; 60.41% (form, market) &rarr; 62.89% (model) &rarr; 100% (oracle). The model captures <strong>12.0%</strong> of the upside available over a rule you can apply in your head. Bars are proportional to the full season total, which is why the differences look small &mdash; they are.</figcaption>
+</figure>
+
+<div class="col">
+  <p>Note that "start your better preseason quarterback, every week, without looking" is already right <strong>59.8%</strong> of the time. Everything the model knows about markets, venue, form and matchup moves that to 62.9%. <span class="chip m">measured</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>The economics, where it survives</h2></div>
+    <p>A second quarterback costs a pick and a bench slot. To judge it honestly, quarterback points and the forgone pick must share units, so everything is expressed as points above replacement. The cost of a pick was measured from real drafts rather than assumed.</p>
+  </section>
+</div>
+
+<figure>
+  <p class="fig-t">What a draft pick actually returns</p>
+  <p class="fig-s">Mean usable points above replacement, non-QB picks &middot; FFC drafts 2018&ndash;2025</p>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-lab">Picks 1&ndash;12</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">70.0</span></div>
+    <div class="bar-row"><span class="bar-lab">13&ndash;24</span><span class="bar-track"><span class="bar-fill" style="width:67.5%"></span></span><span class="bar-val">47.2</span></div>
+    <div class="bar-row"><span class="bar-lab">25&ndash;36</span><span class="bar-track"><span class="bar-fill" style="width:38.7%"></span></span><span class="bar-val">27.1</span></div>
+    <div class="bar-row"><span class="bar-lab">37&ndash;48</span><span class="bar-track"><span class="bar-fill" style="width:39.9%"></span></span><span class="bar-val">27.9</span></div>
+    <div class="bar-row"><span class="bar-lab">49&ndash;60</span><span class="bar-track"><span class="bar-fill" style="width:30.4%"></span></span><span class="bar-val">21.3</span></div>
+    <div class="bar-row"><span class="bar-lab">61&ndash;72</span><span class="bar-track"><span class="bar-fill" style="width:18.8%"></span></span><span class="bar-val">13.1</span></div>
+    <div class="bar-row"><span class="bar-lab">73&ndash;84</span><span class="bar-track"><span class="bar-fill" style="width:15.7%"></span></span><span class="bar-val">11.0</span></div>
+    <div class="bar-row"><span class="bar-lab">97&ndash;108</span><span class="bar-track"><span class="bar-fill g" style="width:11.0%"></span></span><span class="bar-val">7.7</span></div>
+    <div class="bar-row"><span class="bar-lab">121&ndash;132</span><span class="bar-track"><span class="bar-fill g" style="width:11.8%"></span></span><span class="bar-val">8.3</span></div>
+    <div class="bar-row"><span class="bar-lab">145&ndash;156</span><span class="bar-track"><span class="bar-fill g" style="width:6.4%"></span></span><span class="bar-val">4.5</span></div>
+  </div>
+  <figcaption>Green bars mark the range where a second quarterback is typically drafted. The alternative use of those picks is worth roughly <strong>5&ndash;8 points</strong> &mdash; a low bar, and the main reason the pairing strategy survives at all despite its mechanism being false.</figcaption>
+</figure>
+
+<div class="tw">
+<table>
+  <caption>Net value = QB points &minus; QB12 replacement &minus; expected return of picks spent &middot; 5 seasons where every strategy is present</caption>
+  <thead><tr><th>Strategy</th><th class="n">QB pts</th><th class="n">vs QB12</th><th class="n">Pick cost</th><th class="n">Net</th><th class="n">SD</th><th class="n">Worst</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>Premium + late partner</td><td class="n">386.4</td><td class="n">112.3</td><td class="n">59.3</td><td class="n">53.0</td><td class="n">43.0</td><td class="n">&minus;2.3</td></tr>
+    <tr><td>Premium QB1 only</td><td class="n">369.2</td><td class="n">95.1</td><td class="n">51.8</td><td class="n">43.3</td><td class="n">52.3</td><td class="n">&minus;20.1</td></tr>
+    <tr><td>Late pair</td><td class="n">328.6</td><td class="n">54.5</td><td class="n">12.2</td><td class="n">42.3</td><td class="n">62.4</td><td class="n">&minus;44.9</td></tr>
+    <tr><td>Streaming (no QB drafted)</td><td class="n">310.4</td><td class="n">36.3</td><td class="n">0.0</td><td class="n">36.3</td><td class="n">20.3</td><td class="n tag-y">+11.4</td></tr>
+    <tr><td>Strong value + complement</td><td class="n">328.6</td><td class="n">54.4</td><td class="n">33.9</td><td class="n">20.5</td><td class="n">36.7</td><td class="n">&minus;34.5</td></tr>
+    <tr><td>Single value QB</td><td class="n">300.6</td><td class="n">26.5</td><td class="n">14.3</td><td class="n">12.2</td><td class="n">24.9</td><td class="n">&minus;23.7</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <div class="call warn">
+    <p class="h">This section was wrong, and the correction is the finding</p>
+    <p>The table above compares strategies that do <em>not</em> share a QB1: "late pair" drafts ADP quarterback ranks 10 and 18, while "single value QB" drafts rank 8. Differencing them and calling the gap the value of a second quarterback attributes the <em>QB1 change</em> to QB2. Holding QB1 fixed reverses the sign. Full account in <a href="#s14">&sect;14</a>.</p>
+  </div>
+  <div class="nums">
+    <div class="num neg"><span class="v">&minus;11.6</span><span class="k">Marginal value of QB2, pooled, QB1 held fixed</span></div>
+    <div class="num neg"><span class="v">0 / 7</span><span class="k">QB1 price points where a second QB paid for itself</span></div>
+    <div class="num"><span class="v"><s>+9.7</s> <s>+30.1</s></span><span class="k">Retired figures, previously headlined here</span></div>
+  </div>
+  <p>Rank-matched, drafting the same QB1 with and without a rank-18 partner: &minus;7.0 at QB1, &minus;10.3 at QB2, &minus;10.5 at QB4, &minus;11.7 at QB6, &minus;14.7 at QB8, &minus;8.7 at QB10, &minus;18.2 at QB12. <strong>Negative everywhere.</strong> <span class="chip m">measured</span></p>
+  <p>The insurance argument is also retired. Decomposed weekly, bye coverage is worth +1.0 and the weekly choice +1.7 points per season against a 5.8-point pick cost &mdash; and admitting <em>more</em> injured QB1s to the sample <em>lowers</em> the estimate. Injuries explain 8.8% of the original figure. The waiver wire supplies that insurance free.</p>
+  <div class="call">
+    <p class="h">The surprise nobody asked for</p>
+    <p>Streaming &mdash; drafting no quarterback at all &mdash; never had a losing season across the backtest (worst +11.4, SD 20.3) while <em>every</em> drafted strategy did. It also beat drafting a single mid-priced quarterback outright, 36.3 to 12.2. For a manager who dislikes variance it is a genuinely defensible plan.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">09</span><h2>Why the 2026 board can't be trusted</h2></div>
+    <p>A ranking was produced from 1,415 real 12-team drafts plus CBS projections rescored to league rules. Two of its inputs are estimates rather than measurements &mdash; the insurance premium and how heavily a forgone pick is charged. Varying them over a reasonable range does not nudge the order. It replaces it.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Assumption</th><th>Top pair</th><th class="n">Josh Allen's best pair</th></tr></thead>
+  <tbody>
+    <tr><td>Insurance &times;0.0</td><td>Josh Allen + Daniel Jones</td><td class="n">rank 1</td></tr>
+    <tr><td>Insurance &times;0.5</td><td>Josh Allen + Daniel Jones</td><td class="n">rank 1</td></tr>
+    <tr class="hi"><td>Insurance &times;1.0 (central)</td><td>Jalen Hurts + Jaxson Dart</td><td class="n">rank 33</td></tr>
+    <tr><td>Insurance &times;1.5</td><td>Jalen Hurts + Jaxson Dart</td><td class="n">rank 88</td></tr>
+    <tr><td>Pick cost &times;0.5</td><td>Josh Allen + Jaxson Dart</td><td class="n">rank 1</td></tr>
+    <tr><td>Pick cost &times;1.5</td><td>Jaxson Dart + Daniel Jones</td><td class="n">rank 123</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>The gaps between pairs are smaller than the uncertainty in the assumptions. Published as the headline of that phase rather than buried, because a ranking that moves a player from 1st to 123rd on a defensible change of assumption is not a ranking. <span class="chip r">rejected</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">10</span><h2>Waiting on quarterback, from pick 7</h2></div>
+    <p>Backtested with every pick made by ADP, so nothing is chosen with hindsight. The standard errors are the story.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>2020&ndash;2025, n = 6 seasons</caption>
+  <thead><tr><th>Plan</th><th class="n">QB pts</th><th class="n">Pick cost</th><th class="n">Net</th><th class="n">&plusmn; SE</th><th class="n">Worst</th></tr></thead>
+  <tbody>
+    <tr><td>Premium QB1 only</td><td class="n">370.4</td><td class="n">51.0</td><td class="n">46.3</td><td class="n">19.3</td><td class="n">&minus;20.1</td></tr>
+    <tr><td>Premium QB1 + late QB2</td><td class="n">370.7</td><td class="n">58.8</td><td class="n">38.8</td><td class="n">18.7</td><td class="n">&minus;25.5</td></tr>
+    <tr class="hi"><td>Late single QB (pick 79)</td><td class="n">317.8</td><td class="n">10.9</td><td class="n">33.8</td><td class="n">15.4</td><td class="n tag-y">&minus;4.9</td></tr>
+    <tr><td>Late pair (79, then ~127)</td><td class="n">315.4</td><td class="n">18.7</td><td class="n">23.6</td><td class="n">19.7</td><td class="n">&minus;47.3</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>Six seasons gives &plusmn;15&ndash;20 points per plan while the entire spread between best and worst is 22.7. <strong>None of these differences are established.</strong> Waiting is not measurably worse than paying up &mdash; and it is not measurably better either.</p>
+  <p>What does separate cleanly is downside. The late single quarterback's worst season was <strong>&minus;4.9</strong> against <strong>&minus;20.1</strong> for premium. Less capital committed, less to lose. Waiting on quarterback is defensible as risk reduction, not as an edge. <span class="chip i">inferred</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">11</span><h2>How look-ahead was prevented</h2></div>
+    <p>Look-ahead bias is the one failure mode that would invalidate every number above, and it is silent when it happens. Four independent guards:</p>
+    <ul>
+      <li><strong>Two implementations, cross-checked.</strong> One filters history explicitly per week; the other is a vectorised shift-then-roll where every rolling statistic is computed on a lagged series. They agree to 0.0.</li>
+      <li><strong>An explicit leakage audit</strong> asserting the latest date feeding any feature precedes kickoff.</li>
+      <li><strong>Walk-forward only.</strong> Train on seasons before <span class="mono">S</span>, test on <span class="mono">S</span>. The projection layer makes this structural, not a convention.</li>
+      <li><strong>Decisions locked before outcomes are seen</strong>, in every simulation.</li>
+    </ul>
+    <p>Even the shrinkage target &mdash; the league-average baseline that opponent ratings are pulled toward &mdash; is an expanding as-of mean, so it leaks nothing either.</p>
+  </section>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">12</span><h2>Limitations</h2></div>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Limitation</th><th>Effect on conclusions</th></tr></thead>
+  <tbody>
+    <tr><td>Eight-season window</td><td>Thin for interaction terms; mitigated with ridge, archetype-level effects, and split-half testing rather than trusting coefficients</td></tr>
+    <tr><td>Starter identification excluded</td><td>Panel is "given he started"; a live system needs depth-chart and injury logic</td></tr>
+    <tr><td>All eligible pairs, not selected pairs</td><td>Measures the average pair; selection was never shown to beat it</td></tr>
+    <tr><td>No historical player props</td><td>Prop features are forward-only; prop history begins May 2023, covering 3 of 8 seasons</td></tr>
+    <tr><td>Prediction markets unbacktestable</td><td>No free price archive exists anywhere; Kalshi QB markets are in-season only</td></tr>
+    <tr><td>Replacement = weekly median</td><td>A sharper streamer raises the baseline and shrinks every measured gain</td></tr>
+    <tr><td>Insurance premium is interpolated</td><td>An estimate, not a measurement &mdash; and the 2026 ranking turns on it</td></tr>
+    <tr><td>Weather 38&ndash;75% populated</td><td>The largest scheduling effect is the least reliably available</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <section>
+    <div class="sec-head"><span class="sec-num">13</span><h2>What to actually do</h2></div>
+    <p>The tool this research was meant to justify should not be built. Its two jobs would be the weekly start/sit call &mdash; worth 4.9 points a season over a rule you can apply mentally &mdash; and the pair ranking, which reorders completely under its own assumptions. Neither justifies a frontend.</p>
+    <p>What the evidence does support, in order of value per unit of effort:</p>
+    <ul>
+      <li><strong>Draft one quarterback and do not draft a second.</strong> Held at a fixed QB1, the backup costs about 11.6 points a season at every price point tested. This reverses the advice in the first version of this brief.</li>
+      <li><strong>Use the roster spot on a skill position instead.</strong> That is precisely the alternative the backup was failing to beat.</li>
+      <li><strong>Do not pay for schedule.</strong> One point per game between extremes, unforecastable in August.</li>
+      <li><strong>Cover the bye from the waiver wire.</strong> Bye coverage is worth about +1.0 points a season &mdash; less than the pick costs, and available free.</li>
+      <li><strong>Consider streaming</strong> if you dislike variance. It never had a losing season across the backtest.</li>
+      <li><strong>Do not spend another hour</strong> on schedule modelling, matchup interactions, or playoff weighting. They were tested carefully and found empty.</li>
+    </ul>
+    <div class="call">
+      <p class="h">The most valuable output</p>
+      <p>Nine phases of analysis produced one clearly actionable sentence and a long list of things not to bother with. That second list is worth more than it looks &mdash; it is a month of work nobody now has to repeat.</p>
+    </div>
+  </section>
+
+  <section id="s14">
+    <div class="sec-head"><span class="sec-num">14</span><h2>What the adversarial pass found</h2></div>
+    <p class="lede">Every KEEP finding was handed to an agent whose only instruction was to break it. The economics did not survive, and the way it failed is more instructive than the original result.</p>
+    <p>The attack began by <em>reproducing</em> everything: the pick-value curve to 0.0000 from a rebuild that never touched the original code, the strategy table to the decimal, and all three marginals. So the failure is real, not a misreading.</p>
+
+    <h3>The comparison was invalid</h3>
+    <p>"Late pair" drafts ADP quarterback ranks 10 and 18. "Single value QB" drafts rank 8. Differencing them and attributing the gap to the second quarterback charges it with the effect of changing QB1. Rank-matched &mdash; same QB1, with and without a rank-18 partner &mdash; the sign reverses at every price point.</p>
+
+    <h3>No uncertainty had been reported, and it swamps the effect</h3>
+    <p>The +9.7 carried a standard error of 4.8 and a confidence interval of [&minus;3.8, +23.1], p = 0.116. The +30.1 carried a standard error of 34.0 and an interval <strong>189 points wide</strong>. Neither published number was ever distinguishable from zero. Both had been quoted to one decimal place.</p>
+
+    <h3>Two bugs in the pricing code</h3>
+    <p>The pick-cost lookup compared a floating-point ADP against integer bucket edges, so an ADP of 48.1 fell between the 37&ndash;48 and 49&ndash;60 buckets and was silently <strong>charged nothing</strong> &mdash; 8% of all picks. The identical fix already existed in a later script and had never been backported, which is exactly how it survived. Separately, an unresolved player name deleted a strategy-season rather than charging a bust; the 2021 partner was a quarterback who never played that year.</p>
+
+    <h3>What did survive</h3>
+    <p>Survivorship bias (2.0% of drafted players fail to join, worth 0.22 points), mean-versus-median pick cost, and 5% trimming. Replacement level was <em>measured</em> rather than assumed: the streaming strategy actually lands at the 56.3rd percentile of weekly starters, not the median.</p>
+
+    <div class="call">
+      <p class="h">Why this is in the brief rather than quietly patched</p>
+      <p>A research document that only shows what survived is not evidence, it is advertising. The original figures are struck through above rather than deleted, so the record shows what was claimed, what broke it, and why. The reversal cost one agent-hour and would have cost a real draft pick.</p>
+    </div>
+  </section>
+
+  <hr class="end">
+  <p class="foot">All figures reproduce from scripts in the <code>qb-pairing-lab</code> repository. Data: nflverse (schedules, box scores, closing betting lines 2007&ndash;2025), Fantasy Football Calculator (ADP from real drafts), CBS Sports (projections, rescored to league rules), Kalshi. Total data cost: $0. League: 12 teams, 1QB/2RB/3WR/1TE/K/DST, no flex, 7 bench, 4-point passing touchdowns.</p>
+</div>
+</div>

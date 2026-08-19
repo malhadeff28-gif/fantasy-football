@@ -1,0 +1,324 @@
+<title>Four Backs, One Error Bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF1F5;
+  --ink:#101418; --ink-2:#39424E; --muted:#616B78; --rule:#DDE1E7; --rule-2:#C9D0D9;
+  --accent:#1F5F8B; --accent-soft:#E4EDF4;
+  --good:#2F7A55; --good-soft:#E3F0E9;
+  --bad:#B03A3A; --bad-soft:#F6E5E5;
+  --infer:#8A6A12; --infer-soft:#F5EDD9;
+  --shadow:0 1px 2px rgba(16,20,24,.05),0 8px 24px -12px rgba(16,20,24,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+    --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+    --accent:#6FB0DA; --accent-soft:#15242F;
+    --good:#5DBB8A; --good-soft:#132318;
+    --bad:#E08585; --bad-soft:#2A1717;
+    --infer:#DCB350; --infer-soft:#251E0E;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+  --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+  --accent:#6FB0DA; --accent-soft:#15242F;
+  --good:#5DBB8A; --good-soft:#132318;
+  --bad:#E08585; --bad-soft:#2A1717;
+  --infer:#DCB350; --infer-soft:#251E0E;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:68ch;margin-inline:auto}
+h1,h2,h3{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;text-wrap:balance}
+.mono,td.n,th.n{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+header.mast{border-bottom:1px solid var(--rule);margin-bottom:48px}
+.mast-in{max-width:1180px;margin:0 auto;padding:56px 24px 40px}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+h1{font-size:clamp(2.5rem,6vw,4.1rem);line-height:1.02;font-weight:800;letter-spacing:-.025em;margin:0 0 20px;max-width:16ch}
+.dek{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--ink-2);max-width:60ch;margin:0 0 32px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:18px}
+.meta b{color:var(--ink-2);font-weight:500}
+
+.verdict{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:4px;padding:26px 28px;margin:0 0 14px;box-shadow:var(--shadow)}
+.verdict .lab{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;font-weight:600}
+.verdict p{margin:0 0 12px;font-size:1.12rem}
+.verdict p:last-child{margin-bottom:0}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;white-space:nowrap;vertical-align:2px}
+.chip.m{background:var(--good-soft);color:var(--good);border:1px solid color-mix(in srgb,var(--good) 30%,transparent)}
+.chip.r{background:var(--bad-soft);color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.chip.i{background:var(--infer-soft);color:var(--infer);border:1px solid color-mix(in srgb,var(--infer) 30%,transparent)}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+section{margin:64px 0 0}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-top:2px solid var(--ink);padding-top:12px;margin:0 0 8px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.08em;flex:none}
+h2{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.018em;margin:0}
+h3{font-size:1.12rem;font-weight:700;margin:38px 0 10px}
+p{margin:0 0 18px}
+.lede{font-size:1.1rem;color:var(--ink-2)}
+strong{font-weight:600}
+
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:28px 0}
+.num{background:var(--surface);padding:20px 18px}
+.num .v{font-family:"IBM Plex Mono",monospace;font-size:1.85rem;font-weight:600;letter-spacing:-.02em;line-height:1.1;display:block;margin-bottom:6px}
+.num .k{font-size:12.5px;color:var(--muted);line-height:1.4;display:block}
+.num.pos .v{color:var(--good)} .num.neg .v{color:var(--bad)} .num.acc .v{color:var(--accent)}
+
+.tw{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:min(100%,540px)}
+caption{text-align:left;font-size:12.5px;color:var(--muted);padding:12px 16px 0;font-family:"IBM Plex Mono",monospace}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule)}
+thead th{font-family:"Bricolage Grotesque",sans-serif;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2);border-bottom:1px solid var(--rule-2)}
+td.n,th.n{text-align:right}
+tbody tr:last-child td{border-bottom:none}
+tr.hi td{background:var(--accent-soft)}
+tr.hi td:first-child{font-weight:600}
+tr.bad td{background:var(--bad-soft)}
+
+figure{margin:30px 0;background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:22px}
+figcaption{font-size:13px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+.fig-t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;margin:0 0 3px}
+.fig-s{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+
+.dist{display:grid;gap:16px}
+.drow{display:grid;grid-template-columns:minmax(96px,132px) 1fr;align-items:center;gap:14px}
+.dlab{font-size:13.5px;color:var(--ink-2);text-align:right;line-height:1.25}
+.dlab span{display:block;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.dtrack{position:relative;height:26px;background:var(--surface-2);border-radius:3px}
+.dbar{position:absolute;top:6px;bottom:6px;background:var(--accent);opacity:.28;border-radius:2px}
+.dbox{position:absolute;top:2px;bottom:2px;background:var(--accent);opacity:.55;border-radius:2px}
+.dmed{position:absolute;top:0;bottom:0;width:3px;background:var(--ink);border-radius:2px}
+.axis{position:relative;height:18px;margin-top:4px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+.axis span{position:absolute;transform:translateX(-50%)}
+
+.call{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;border-radius:0 4px 4px 0;margin:24px 0}
+.call p:last-child{margin-bottom:0}
+.call.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+.call .h{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:13.5px;margin:0 0 6px}
+
+ul{margin:0 0 18px;padding-left:1.15em}
+li{margin-bottom:9px}
+hr.end{border:none;border-top:1px solid var(--rule);margin:56px 0 24px}
+.foot{font-size:13px;color:var(--muted)}
+code{font-family:"IBM Plex Mono",monospace;font-size:.87em;background:var(--surface-2);padding:1px 5px;border-radius:3px}
+@media (max-width:640px){body{font-size:16px}.drow{grid-template-columns:minmax(78px,100px) 1fr;gap:9px}.dlab{font-size:12px}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="kicker">Fantasy football research &middot; 12-team, 2 RB, non-PPR</p>
+    <h1>Four Backs, One Error Bar</h1>
+    <p class="dek">Swift, Judkins, Montgomery and Pollard go within 22 picks of each other. Their simulated medians span 106 points. Here is what separates them &mdash; and how much of that separation is real.</p>
+    <div class="meta">
+      <span><b>Panel</b> 12,003 RB-weeks, 392 players</span>
+      <span><b>Simulation</b> 50,000 draws each</span>
+      <span><b>Backtest</b> 139 player-seasons</span>
+      <span><b>Updated</b> 19 Aug 2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="col">
+
+  <div class="verdict">
+    <p class="lab">Verdict</p>
+    <p><strong>Both answers are the same player &mdash; Quinshon Judkins &mdash; and the premise the project was built on did not hold.</strong></p>
+    <p>The brief hoped to find a back whose workload distribution is more positively skewed than consensus assumes. <strong>Three of the four are negatively skewed.</strong> The only positive skew belongs to David Montgomery, and it is a long right tail on a 92-point median: a lottery ticket, not a mispricing.</p>
+    <p>Judkins has the best floor and the best risk-adjusted ceiling. But hold that at <strong>89% confidence, not conviction</strong>. The one call this work can genuinely defend is <strong>fading Montgomery</strong>.</p>
+  </div>
+  <p class="foot" style="margin-bottom:0">Claims are tagged <span class="chip m">measured</span> <span class="chip i">inferred</span> or <span class="chip r">rejected</span>. Every figure was re-derived from the output data rather than copied from the working notes &mdash; thirteen places where a source document disagreed with its own data are listed in the full report.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>The four, and one that moved</h2></div>
+    <p class="lede">Nothing in this table is from recall. Team assignments were verified against the master player table, the 2026 roster, and the March 2026 depth chart.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Player</th><th>2025</th><th>2026</th><th class="n">ADP</th><th class="n">Pos rank</th><th>Competition in the room</th></tr></thead>
+  <tbody>
+    <tr><td>D'Andre Swift</td><td>CHI</td><td>CHI</td><td class="n">41.9</td><td class="n">RB20</td><td>Monangai &mdash; 33% of carries, 12 goal-line to Swift's 14</td></tr>
+    <tr class="hi"><td>Quinshon Judkins</td><td>CLE</td><td>CLE</td><td class="n">49.1</td><td class="n">RB22</td><td>Sampson &mdash; passing-down complement only</td></tr>
+    <tr><td>David Montgomery</td><td><strong>DET</strong></td><td><strong>HOU</strong></td><td class="n">54.6</td><td class="n">RB24</td><td>Marks &mdash; 196 carries, 43.6% share in 2025</td></tr>
+    <tr><td>Tony Pollard</td><td>TEN</td><td>TEN</td><td class="n">63.7</td><td class="n">RB26</td><td>Spears + 2026 fifth-round rookie</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p><strong>Montgomery changed teams.</strong> Confirmed three independent ways and corroborated by ADP listing him as Houston. Every other assignment is unchanged. This is the single finding that justifies not trusting memory on team assignment. <span class="chip m">measured</span></p>
+  <p>And the depth chart calling him Houston's RB1 is dated <strong>14 March 2026</strong> &mdash; the week he signed, before Woody Marks had taken a single 2026 snap. The market has priced that snapshot.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>The distributions</h2></div>
+    <p>50,000 simulated seasons each. The pale bar spans the 10th to 90th percentile, the darker box the interquartile range, the vertical line the median.</p>
+  </section>
+</div>
+
+<figure>
+  <p class="fig-t">Four backs priced within 22 picks, spanning 106 points of median outcome</p>
+  <p class="fig-s">Season fantasy points, non-PPR &middot; p10&ndash;p90 range, IQR box, median line</p>
+  <div class="dist">
+    <div class="drow">
+      <span class="dlab">Judkins<span>CLE &middot; ADP 49</span></span>
+      <span class="dtrack">
+        <span class="dbar" style="left:30.1%;right:6.9%"></span>
+        <span class="dbox" style="left:45.1%;right:20.7%"></span>
+        <span class="dmed" style="left:62.7%"></span>
+      </span>
+    </div>
+    <div class="drow">
+      <span class="dlab">Swift<span>CHI &middot; ADP 42</span></span>
+      <span class="dtrack">
+        <span class="dbar" style="left:20.2%;right:12.8%"></span>
+        <span class="dbox" style="left:37.6%;right:30.3%"></span>
+        <span class="dmed" style="left:54.1%"></span>
+      </span>
+    </div>
+    <div class="drow">
+      <span class="dlab">Pollard<span>TEN &middot; ADP 64</span></span>
+      <span class="dtrack">
+        <span class="dbar" style="left:15.8%;right:22.5%"></span>
+        <span class="dbox" style="left:31.3%;right:36.3%"></span>
+        <span class="dmed" style="left:50.0%"></span>
+      </span>
+    </div>
+    <div class="drow">
+      <span class="dlab">Montgomery<span>HOU &middot; ADP 55</span></span>
+      <span class="dtrack">
+        <span class="dbar" style="left:9.2%;right:45.3%"></span>
+        <span class="dbox" style="left:15.6%;right:57.1%"></span>
+        <span class="dmed" style="left:26.7%"></span>
+      </span>
+    </div>
+  </div>
+  <div class="axis" style="margin-left:calc(min(132px,26%) + 14px)">
+    <span style="left:0%">0</span><span style="left:33.9%">100</span><span style="left:67.8%">200</span><span style="left:100%">295</span>
+  </div>
+  <figcaption>Judkins sits highest at every point of the distribution &mdash; floor, quartile, median and ceiling. Montgomery is not merely lower: his entire range sits below the others' interquartile boxes. Note how far the bars overlap. That overlap is the finding, not the ordering.</figcaption>
+</figure>
+
+<div class="tw">
+<table>
+  <caption>Season outcome distributions &middot; 50,000 draws &middot; Monte Carlo standard error &le; 0.34</caption>
+  <thead><tr><th>Player</th><th class="n">Mean</th><th class="n">p10</th><th class="n">p25</th><th class="n">Median</th><th class="n">p75</th><th class="n">p90</th><th class="n">Touch/gm</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>Judkins</td><td class="n">184.1</td><td class="n"><strong>88.8</strong></td><td class="n"><strong>133.1</strong></td><td class="n"><strong>185.1</strong></td><td class="n">233.8</td><td class="n"><strong>274.5</strong></td><td class="n">18.4</td></tr>
+    <tr><td>Swift</td><td class="n">158.9</td><td class="n">59.5</td><td class="n">110.8</td><td class="n">159.6</td><td class="n">205.7</td><td class="n">257.1</td><td class="n">16.3</td></tr>
+    <tr><td>Pollard</td><td class="n">142.2</td><td class="n">46.7</td><td class="n">92.2</td><td class="n">147.5</td><td class="n">187.8</td><td class="n">228.6</td><td class="n">15.0</td></tr>
+    <tr class="bad"><td>Montgomery</td><td class="n">88.0</td><td class="n">27.1</td><td class="n">46.0</td><td class="n">78.8</td><td class="n">126.6</td><td class="n">161.5</td><td class="n">10.0</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tw">
+<table>
+  <caption>Finish probabilities &middot; thresholds resampled per draw</caption>
+  <thead><tr><th>Player</th><th class="n">Top 3</th><th class="n">Top 5</th><th class="n">Top 12</th><th class="n">Top 24</th><th class="n">Bust</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>Judkins</td><td class="n">0.110</td><td class="n"><strong>0.204</strong></td><td class="n"><strong>0.463</strong></td><td class="n"><strong>0.691</strong></td><td class="n"><strong>0.309</strong></td></tr>
+    <tr><td>Swift</td><td class="n">0.073</td><td class="n">0.129</td><td class="n">0.315</td><td class="n">0.580</td><td class="n">0.420</td></tr>
+    <tr class="bad"><td>Montgomery</td><td class="n">&mdash;</td><td class="n">0.001</td><td class="n">0.082</td><td class="n">&mdash;</td><td class="n">0.844</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Risk-adjusted upside, six ways</h2></div>
+    <p>A single metric can be gamed by its own definition, so the ranking is shown under six. Judkins is first under all of them &mdash; <strong>rank spread zero</strong>.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Player</th><th class="n">Sharpe</th><th class="n">Sortino</th><th class="n">Omega</th><th class="n">P(top-5)</th><th class="n">CVaR-up</th><th class="n">Omega @ ADP</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>Judkins</td><td class="n"><strong>0.537</strong></td><td class="n"><strong>1.267</strong></td><td class="n"><strong>0.763</strong></td><td class="n"><strong>0.198</strong></td><td class="n"><strong>305.4</strong></td><td class="n"><strong>17.94</strong></td></tr>
+    <tr><td>Swift</td><td class="n">0.164</td><td class="n">0.265</td><td class="n">0.328</td><td class="n">0.124</td><td class="n">294.4</td><td class="n">4.63</td></tr>
+    <tr><td>Pollard</td><td class="n">&minus;0.064</td><td class="n">&minus;0.085</td><td class="n">0.156</td><td class="n">0.063</td><td class="n">262.3</td><td class="n">4.98</td></tr>
+    <tr class="bad"><td>Montgomery</td><td class="n">&minus;1.146</td><td class="n">&minus;0.765</td><td class="n">0.005</td><td class="n">0.001</td><td class="n">184.4</td><td class="n">0.55</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <div class="call warn">
+    <p class="h">The ranking is robust. Most of the margins are not.</p>
+    <p>Resampling the 30 comparables that every distribution rests on gives <strong>P(Judkins beats Swift) = 0.89</strong> and P(Swift beats Pollard) = 0.79. Only Montgomery separates with certainty &mdash; 1.00 against all three, in every one of 200 resamples.</p>
+    <p>Worse for the ordering: on <em>raw</em> comparable finishes Swift actually leads (13 of 30 top-12, median RB16) against Judkins (10 of 30, RB18.5). Judkins-first comes from the role-transfer step, and the ordering flips at one of the five comparable-pool sizes tested.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>Where this disagrees with consensus</h2></div>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>CBS projections rescored to this league's rules &middot; percentile is where CBS sits in our distribution</caption>
+  <thead><tr><th>Player</th><th class="n">CBS (rescored)</th><th class="n">Our mean</th><th class="n">Difference</th><th class="n">CBS's percentile</th></tr></thead>
+  <tbody>
+    <tr><td>Judkins</td><td class="n">178.3</td><td class="n">184.1</td><td class="n">+5.8</td><td class="n">0.46</td></tr>
+    <tr><td>Pollard</td><td class="n">150.7</td><td class="n">142.2</td><td class="n">&minus;8.5</td><td class="n">0.52</td></tr>
+    <tr><td>Swift</td><td class="n">202.2</td><td class="n">158.9</td><td class="n"><strong>&minus;43.3</strong></td><td class="n">0.74</td></tr>
+    <tr class="bad"><td>Montgomery</td><td class="n">172.3</td><td class="n">88.0</td><td class="n"><strong>&minus;84.3</strong></td><td class="n"><strong>0.93</strong></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p><strong>Montgomery is the actionable one.</strong> CBS's projection sits at the <strong>93rd percentile</strong> of our distribution &mdash; close to our best case, treated as the base case. The mechanism is visible rather than argued: CBS projects <strong>263 carries for a back who took 158 last year</strong>, changed teams, and joined a room where Woody Marks handled 196 carries. The comparable evidence says the median outcome for exactly that profile &mdash; ageing, reduced role, new team &mdash; is <strong>RB41</strong>, and only 3 of 30 such backs finished top-12. <span class="chip m">measured</span></p>
+  <p><strong>Swift's &minus;43.3 gap is not an indictment of the player.</strong> More than half of it &mdash; 23.7 points &mdash; is simply CBS assuming all 17 games. Most of the rest is 9 projected rushing touchdowns off a 4.04% rate that regresses about 85% of the way back to 3.2%. Discount the projection, not the player. <span class="chip i">inferred</span></p>
+  <div class="call">
+    <p class="h">The availability assumption nobody prices</p>
+    <p>CBS gives all four backs 17 games. Our simulations give them 13.5 to 14.6. That single assumption silently adds <strong>19 to 27 points</strong> to each projection. Corrected to a like-for-like 17-game basis, this work is actually <em>above</em> CBS on Judkins (+32) and Pollard (+16).</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>What the model cannot do</h2></div>
+    <p class="lede">Stated up front rather than buried, because it governs how much weight any ordering above deserves.</p>
+  </section>
+  <div class="nums">
+    <div class="num neg"><span class="v">57.4</span><span class="k">Out-of-sample median error, points &mdash; against 58.7 for a curve knowing only ADP</span></div>
+    <div class="num acc"><span class="v">25.5</span><span class="k">The gap between Judkins's median and Swift's</span></div>
+    <div class="num"><span class="v">0 / 19</span><span class="k">Workload metrics beating a lagged-points baseline after correction</span></div>
+  </div>
+  <p><strong>A 25-point median gap sits comfortably inside a 57-point error bar.</strong> The point estimate here is 2% better than a naive ADP curve. What survives the calibration test is the <em>shape</em>: an unbiased median (48.9% of outcomes fall below it), a calibrated interquartile range (49.6%), and a bust probability that means something. <strong>The distribution is the product; the projection is not.</strong> <span class="chip m">measured</span></p>
+  <p>And a clean negative worth as much as any pick: nineteen workload metrics &mdash; snap share, carry share, target share, red-zone and goal-line work &mdash; were tested walk-forward against simply lagging last season's points. <strong>None survives multiple-testing correction.</strong> Volume is highly stable (carries per game correlate 0.77 season to season) and still adds nothing, because how a back is used is already inside what he scored. <strong>Stability is necessary but not sufficient</strong> &mdash; the same trap the quarterback research fell into. <span class="chip r">rejected</span></p>
+  <p>Touchdown rate is close to noise: split-half within a single season is <strong>r = 0.17</strong>, and a 2.3&times; gap in touchdown rate collapses to 1.1&times; the following year.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>What to actually do</h2></div>
+    <ul>
+      <li><strong>Fade David Montgomery.</strong> The one call this project can defend. The 106-point gap from Judkins is nearly two full error bars; it holds under all six risk metrics, all three role specifications, all five comparable-pool sizes, and in 200 of 200 resamples. P(bust) 0.844, and consensus sits at the 93rd percentile of our distribution.</li>
+      <li><strong>Prefer Judkins at RB22 &mdash; as a lean, not a conviction.</strong> Best floor and best risk-adjusted ceiling, but held at 89% confidence over Swift, with the raw comparables pointing the other way.</li>
+      <li><strong>Swift is second and the most expensive</strong>, going seven picks earlier. You are paying the highest price of the four for the second-best distribution.</li>
+      <li><strong>Pollard only at his price.</strong> Worst of the top three on every raw measure, but cheapest by 22 picks.</li>
+      <li><strong>Do not pay for workload metrics.</strong> None of nineteen beat lagging last season's points.</li>
+    </ul>
+    <div class="call">
+      <p class="h">If you remember one thing</p>
+      <p>These four are priced as near-equivalents and are not. But the separation the data supports is <em>Montgomery versus the rest</em>, not a clean 1-2-3-4 ordering. Anything finer than that is inside the noise.</p>
+    </div>
+  </section>
+
+  <hr class="end">
+  <p class="foot">Full report with all thirteen source reconciliations: <code>rb-risk-upside/research/RB_RISK_UPSIDE_RESEARCH.md</code>. Data: nflverse (weekly stats, snap counts, rosters, depth charts), Fantasy Football Calculator ADP, CBS projections rescored to league rules. Total data cost: $0. League: 12 teams, 2 RB starters, no flex, non-PPR.</p>
+</div>
+</div>

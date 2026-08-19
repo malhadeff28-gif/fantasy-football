@@ -16,6 +16,20 @@ data (ADP, CBS, sportsbook, Kalshi), league scoring and evaluation utilities.
 See [CLAUDE.md](CLAUDE.md) for layout rules, methodology standards, and the
 verified environment.
 
+## Published briefs
+
+Each project has a reading version of its report, kept in the repo as HTML and
+also published as a private page:
+
+| Project | Source | Published |
+| --- | --- | --- |
+| QB pairing | [`qb-brief.html`](qb-pairing/research/qb-brief.html) | <https://claude.ai/code/artifact/ff4ef319-176f-4dab-87dd-435011d61b89> |
+| D/ST streaming | [`dst-brief.html`](dst-streaming/research/dst-brief.html) | <https://claude.ai/code/artifact/d0232cde-f368-4fb3-891b-a48a4b09dbb0> |
+| RB risk / upside | [`rb-brief.html`](rb-risk-upside/research/rb-brief.html) | <https://claude.ai/code/artifact/fc5981dd-06d1-4ec1-948d-fee0a88f981e> |
+
+The HTML is self-contained apart from Google Fonts, so it opens correctly from
+a clone with no build step.
+
 ## Headline result so far
 
 The QB pairing thesis was tested across eight seasons and **the proposed

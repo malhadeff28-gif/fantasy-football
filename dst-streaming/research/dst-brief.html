@@ -1,0 +1,299 @@
+<title>The Thirty-Second Rule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F6F7F9; --surface:#FFFFFF; --surface-2:#EEF1F5;
+  --ink:#101418; --ink-2:#39424E; --muted:#616B78; --rule:#DDE1E7; --rule-2:#C9D0D9;
+  --accent:#1F5F8B; --accent-soft:#E4EDF4;
+  --good:#2F7A55; --good-soft:#E3F0E9;
+  --bad:#B03A3A; --bad-soft:#F6E5E5;
+  --infer:#8A6A12; --infer-soft:#F5EDD9;
+  --shadow:0 1px 2px rgba(16,20,24,.05),0 8px 24px -12px rgba(16,20,24,.18);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+    --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+    --accent:#6FB0DA; --accent-soft:#15242F;
+    --good:#5DBB8A; --good-soft:#132318;
+    --bad:#E08585; --bad-soft:#2A1717;
+    --infer:#DCB350; --infer-soft:#251E0E;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E1116; --surface:#161B22; --surface-2:#1C232C;
+  --ink:#E6EAF0; --ink-2:#BFC8D4; --muted:#8B95A3; --rule:#232A33; --rule-2:#303945;
+  --accent:#6FB0DA; --accent-soft:#15242F;
+  --good:#5DBB8A; --good-soft:#132318;
+  --bad:#E08585; --bad-soft:#2A1717;
+  --infer:#DCB350; --infer-soft:#251E0E;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"Source Serif 4",Georgia,"Times New Roman",serif;
+  font-size:17px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 96px}
+.col{max-width:68ch;margin-inline:auto}
+h1,h2,h3{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;text-wrap:balance}
+.mono,td.n,th.n{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+header.mast{border-bottom:1px solid var(--rule);margin-bottom:48px}
+.mast-in{max-width:1180px;margin:0 auto;padding:56px 24px 40px}
+.kicker{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 20px}
+h1{font-size:clamp(2.5rem,6vw,4.1rem);line-height:1.02;font-weight:800;letter-spacing:-.025em;margin:0 0 20px;max-width:15ch}
+.dek{font-size:clamp(1.05rem,2vw,1.28rem);color:var(--ink-2);max-width:60ch;margin:0 0 32px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:18px}
+.meta b{color:var(--ink-2);font-weight:500}
+
+.verdict{background:var(--surface);border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:4px;padding:26px 28px;margin:0 0 14px;box-shadow:var(--shadow)}
+.verdict .lab{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px;font-weight:600}
+.verdict p{margin:0 0 12px;font-size:1.12rem}
+.verdict p:last-child{margin-bottom:0}
+
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;white-space:nowrap;vertical-align:2px}
+.chip.m{background:var(--good-soft);color:var(--good);border:1px solid color-mix(in srgb,var(--good) 30%,transparent)}
+.chip.r{background:var(--bad-soft);color:var(--bad);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent)}
+.chip.i{background:var(--infer-soft);color:var(--infer);border:1px solid color-mix(in srgb,var(--infer) 30%,transparent)}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+section{margin:64px 0 0}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-top:2px solid var(--ink);padding-top:12px;margin:0 0 8px}
+.sec-num{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);letter-spacing:.08em;flex:none}
+h2{font-size:clamp(1.5rem,3vw,2rem);font-weight:700;letter-spacing:-.018em;margin:0}
+h3{font-size:1.12rem;font-weight:700;margin:38px 0 10px}
+p{margin:0 0 18px}
+.lede{font-size:1.1rem;color:var(--ink-2)}
+strong{font-weight:600}
+
+.nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:28px 0}
+.num{background:var(--surface);padding:20px 18px}
+.num .v{font-family:"IBM Plex Mono",monospace;font-size:1.85rem;font-weight:600;letter-spacing:-.02em;line-height:1.1;display:block;margin-bottom:6px}
+.num .k{font-size:12.5px;color:var(--muted);line-height:1.4;display:block}
+.num.pos .v{color:var(--good)} .num.neg .v{color:var(--bad)} .num.acc .v{color:var(--accent)}
+
+.tw{overflow-x:auto;margin:22px 0;border:1px solid var(--rule);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:min(100%,540px)}
+caption{text-align:left;font-size:12.5px;color:var(--muted);padding:12px 16px 0;font-family:"IBM Plex Mono",monospace}
+th,td{padding:9px 14px;text-align:left;border-bottom:1px solid var(--rule)}
+thead th{font-family:"Bricolage Grotesque",sans-serif;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2);border-bottom:1px solid var(--rule-2)}
+td.n,th.n{text-align:right}
+tbody tr:last-child td{border-bottom:none}
+tr.hi td{background:var(--accent-soft)}
+tr.hi td:first-child{font-weight:600}
+
+figure{margin:30px 0;background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:22px}
+figcaption{font-size:13px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--rule)}
+.fig-t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15px;margin:0 0 3px}
+.fig-s{font-size:12.5px;color:var(--muted);margin:0 0 18px}
+.bars{display:grid;gap:8px}
+.bar-row{display:grid;grid-template-columns:minmax(112px,190px) 1fr auto;align-items:center;gap:12px}
+.bar-lab{font-size:13px;color:var(--ink-2);text-align:right;line-height:1.25}
+.bar-track{position:relative;height:20px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.bar-fill{position:absolute;top:0;bottom:0;left:0;background:var(--accent);border-radius:0 3px 3px 0}
+.bar-fill.mut{background:var(--rule-2)}
+.bar-val{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2);min-width:56px;text-align:right}
+
+.call{border-left:3px solid var(--accent);background:var(--accent-soft);padding:16px 20px;border-radius:0 4px 4px 0;margin:24px 0}
+.call p:last-child{margin-bottom:0}
+.call.warn{border-left-color:var(--bad);background:var(--bad-soft)}
+.call .h{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:13.5px;margin:0 0 6px}
+
+ul{margin:0 0 18px;padding-left:1.15em}
+li{margin-bottom:9px}
+hr.end{border:none;border-top:1px solid var(--rule);margin:56px 0 24px}
+.foot{font-size:13px;color:var(--muted)}
+code{font-family:"IBM Plex Mono",monospace;font-size:.87em;background:var(--surface-2);padding:1px 5px;border-radius:3px}
+@media (max-width:640px){body{font-size:16px}.bar-row{grid-template-columns:minmax(90px,130px) 1fr auto;gap:8px}.bar-lab{font-size:12px}}
+</style>
+
+<header class="mast">
+  <div class="mast-in">
+    <p class="kicker">Fantasy football research &middot; 12-team, 1 D/ST, CBS scoring</p>
+    <h1>The Thirty-Second Rule</h1>
+    <p class="dek">Which two defenses should you rotate through the first six weeks? After four independent lines of attack, one number decides it &mdash; and no model built here improves on reading it off the board.</p>
+    <div class="meta">
+      <span><b>Panel</b> 4,222 defense-weeks</span>
+      <span><b>Backtest</b> 2018&ndash;2025, walk-forward</span>
+      <span><b>Pairs scored</b> 496</span>
+      <span><b>Updated</b> 19 Aug 2026</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<div class="col">
+
+  <div class="verdict">
+    <p class="lab">Verdict</p>
+    <p><strong>The opponent's implied team total is the entire signal.</strong> Defensive form, opponent-offence quality, opposing-QB identity and prior-season defensive ratings each add essentially nothing on top of it.</p>
+    <p>The benchmark was named before any model was fitted: <em>each week, start whichever rostered defense faces the lowest opponent implied total.</em> That rule takes thirty seconds. <strong>Every model that knows anything the rule does not ranks worse than it.</strong></p>
+    <p>Draft one defense very late if you want one, and stream the other slot.</p>
+  </div>
+  <p class="foot" style="margin-bottom:0">Claims are tagged <span class="chip m">measured</span> <span class="chip i">inferred</span> or <span class="chip r">rejected</span>. A critic pass re-derived <strong>181 numbers</strong> from source data and corrected <strong>14</strong>, including one data bug. Corrections are marked in the full report rather than applied silently.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>Four attacks, one answer</h2></div>
+    <p class="lede">Each of these was a separate attempt to beat the market number. All four failed, and the convergence is the finding.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <thead><tr><th>Approach</th><th>Result</th><th class="n">Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>Best model that knows more than the rule</td><td class="mono">&minus;0.06 pp vs. the rule</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr><td>Opposing-QB identity, on top of team level</td><td class="mono">+0.10 pp</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr><td>Defensive form on its own</td><td class="mono">53.61% (coin flip = 50%)</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr><td>Prior-season defensive ratings</td><td class="mono">lose to the market even in week 1</td><td class="n"><span class="chip r">rejected</span></td></tr>
+    <tr class="hi"><td>Opponent implied team total, alone</td><td class="mono">61.01%</td><td class="n"><span class="chip m">the signal</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <div class="call warn">
+    <p class="h">A circular claim, caught and corrected</p>
+    <p>This report originally read "the model beats the trivial rule by <strong>+0.00 pp</strong>". That was circular: the script selects the best model by accuracy, and the winner <em>is</em> a ridge fit on the single market variable, which ranks identically to the rule by construction. Stated non-circularly, the best model that knows anything extra scores <strong>60.95% against 61.01%</strong>. Adding features makes ranking <strong>worse</strong> &mdash; harsher than what was first published, not softer.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Why weeks 1&ndash;6, honestly</h2></div>
+    <p>The window was chosen because forecasting gets harder further out. That is true &mdash; but not for the assumed reason.</p>
+  </section>
+  <div class="nums">
+    <div class="num pos"><span class="v">93 / 93</span><span class="k">Games in weeks 1&ndash;6 with a 2026 betting line</span></div>
+    <div class="num neg"><span class="v">12 / 165</span><span class="k">Games in weeks 8&ndash;18 with one</span></div>
+    <div class="num acc"><span class="v">~6.5 wk</span><span class="k">Half-life of preseason defensive knowledge, CI [1.8, &gt;50]</span></div>
+  </div>
+  <p><strong>The predictor that works physically stops existing after week 6.</strong> That alone justifies the window. What does <em>not</em> justify it is preseason team quality: those ratings are weak everywhere, at r &asymp; 0.14 and 55% accuracy even inside weeks 1&ndash;6. <strong>Preseason at its best (55.1%) loses to the market at its worst (58.6%).</strong> <span class="chip m">measured</span></p>
+  <p>The sanity check that the decay method works at all: <strong>the market shows no decay</strong>, best fit by a constant. A forward-looking price should not decay the way a backward-looking rating does.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>What is a trait and what is a coin flip</h2></div>
+    <p>Season-to-season correlation of each team rate, 224 team-seasons.</p>
+  </section>
+</div>
+
+<figure>
+  <p class="fig-t">Nothing defensive persists well, and touchdowns not at all</p>
+  <p class="fig-s">Correlation of a team's rate in season N with season N+1</p>
+  <div class="bars">
+    <div class="bar-row"><span class="bar-lab">Points allowed</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">0.279</span></div>
+    <div class="bar-row"><span class="bar-lab">Total D/ST points</span><span class="bar-track"><span class="bar-fill" style="width:96.8%"></span></span><span class="bar-val">0.270</span></div>
+    <div class="bar-row"><span class="bar-lab">Sacks</span><span class="bar-track"><span class="bar-fill mut" style="width:69.9%"></span></span><span class="bar-val">0.195</span></div>
+    <div class="bar-row"><span class="bar-lab">Interceptions</span><span class="bar-track"><span class="bar-fill mut" style="width:61.3%"></span></span><span class="bar-val">0.171</span></div>
+    <div class="bar-row"><span class="bar-lab">Fumble recoveries</span><span class="bar-track"><span class="bar-fill mut" style="width:18.3%"></span></span><span class="bar-val">0.051</span></div>
+    <div class="bar-row"><span class="bar-lab">Defensive touchdowns</span><span class="bar-track"><span class="bar-fill" style="width:2.5%;background:var(--bad)"></span></span><span class="bar-val">&minus;0.075</span></div>
+  </div>
+  <figcaption>Answering the brief directly: <strong>defensive touchdowns are random</strong>, with a point estimate slightly below zero. Even sacks &mdash; the largest single scoring component at 2.40 points per game &mdash; persist at only 0.195. There is very little stable defensive quality here to draft on.</figcaption>
+</figure>
+
+<div class="tw">
+<table>
+  <caption>Where D/ST points come from, per game &middot; panel mean 6.28</caption>
+  <thead><tr><th>Component</th><th class="n">Points/game</th><th>Drives</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>Sacks</td><td class="n"><strong>2.40</strong></td><td>the middle of the distribution</td></tr>
+    <tr><td>Interceptions</td><td class="n">1.54</td><td>middle</td></tr>
+    <tr><td>Fumble recoveries</td><td class="n">1.04</td><td>middle</td></tr>
+    <tr><td>Points-allowed tier</td><td class="n">0.48</td><td><strong>both tails</strong> (range &minus;4 to +10)</td></tr>
+    <tr><td>Defensive TD</td><td class="n">0.41</td><td><strong>upper tail</strong></td></tr>
+    <tr><td>Special-teams TD</td><td class="n">0.21</td><td>upper tail</td></tr>
+    <tr><td>Safeties + blocked kicks</td><td class="n">0.20</td><td>upper tail</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>Sacks dominate the <em>mean</em>; the points-allowed tier and the six-point defensive touchdown drive the <em>tails</em>. Floor and ceiling have different sources, which is why the model simulates components separately rather than fitting one distribution to the total. <span class="chip m">measured</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>The 2026 board</h2></div>
+    <p>All 496 combinations scored across weeks 1&ndash;6, starter chosen pregame, outcome drawn from a simulator whose percentile coverage lands within 2 pp of nominal &mdash; 22 of 23 reliability bins contain the prediction.</p>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>Best pairs, weeks 1&ndash;6</caption>
+  <thead><tr><th>Pair</th><th class="n">ADP</th><th class="n">W1&ndash;4</th><th class="n">W1&ndash;6</th><th class="n">p10</th><th class="n">p90</th><th class="n">Bad wks</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td>KC + NE</td><td class="n">143/125</td><td class="n">30.4</td><td class="n"><strong>47.8</strong></td><td class="n"><strong>31.0</strong></td><td class="n"><strong>66.0</strong></td><td class="n">0</td></tr>
+    <tr><td>DET + NE</td><td class="n">126/125</td><td class="n">29.3</td><td class="n">46.7</td><td class="n">30.0</td><td class="n">64.0</td><td class="n">0</td></tr>
+    <tr><td>NE + SEA</td><td class="n">125/84</td><td class="n">29.0</td><td class="n">46.4</td><td class="n">29.0</td><td class="n">65.0</td><td class="n">0</td></tr>
+    <tr><td>NE + SF</td><td class="n">125/undrafted</td><td class="n">28.7</td><td class="n">46.2</td><td class="n">29.0</td><td class="n">64.0</td><td class="n">0</td></tr>
+    <tr><td>KC + LAC <span class="chip i">best W1&ndash;4</span></td><td class="n">143/147</td><td class="n"><strong>32.6</strong></td><td class="n">45.9</td><td class="n">29.0</td><td class="n">64.0</td><td class="n">0</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <div class="call warn">
+    <p class="h">This table is one defense plus a plateau</p>
+    <p>New England appears in <strong>eight of the top ten pairs</strong> &mdash; not a claim about the defense, but a schedule artifact: they draw the Jets in week 6 and the Raiders in week 5. The top ten span <strong>2.3 points</strong> in total, the eight New England pairs span <strong>1.1</strong> &mdash; which is the partner's entire measurable contribution &mdash; and the best New England-free pair is only 1.9 back.</p>
+    <p>Against a 33-point outcome width, choosing correctly <em>within</em> the top ten is worth about <strong>7% of one pair's own spread</strong>. Do not agonise over the partner.</p>
+  </div>
+  <p>The same pair tops both the floor and the ceiling list, which looks like a finding and is not. Across all 496 pairs r(p10, p90) = <strong>0.978</strong> and the p90&minus;p10 width is 28&ndash;36 for every one of them: they are near-translates of each other. The model has no defense-specific quality term, so it <strong>cannot express</strong> a floor-versus-ceiling trade-off. True but hollow. <span class="chip i">inferred</span></p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>The signal, in five rows</h2></div>
+  </section>
+</div>
+
+<div class="tw">
+<table>
+  <caption>Best single matchups in 2026 weeks 1&ndash;6</caption>
+  <thead><tr><th class="n">Wk</th><th>D/ST</th><th>vs</th><th class="n">Opp implied</th><th class="n">Exp</th><th class="n">p50</th><th class="n">p90</th><th class="n">P(top-12)</th><th class="n">P(bust)</th></tr></thead>
+  <tbody>
+    <tr class="hi"><td class="n">6</td><td>NE</td><td>NYJ</td><td class="n">16.5</td><td class="n">9.12</td><td class="n">8.0</td><td class="n">17.0</td><td class="n">64%</td><td class="n">11%</td></tr>
+    <tr><td class="n">1</td><td>JAX</td><td>CLE</td><td class="n">16.5</td><td class="n">8.90</td><td class="n">8.0</td><td class="n">17.0</td><td class="n">56%</td><td class="n">12%</td></tr>
+    <tr><td class="n">2</td><td>LAC</td><td>LV</td><td class="n">17.0</td><td class="n">8.75</td><td class="n">8.0</td><td class="n">17.0</td><td class="n">58%</td><td class="n">11%</td></tr>
+    <tr><td class="n">2</td><td>SEA</td><td>ARI</td><td class="n">17.2</td><td class="n">8.66</td><td class="n">8.0</td><td class="n">17.0</td><td class="n">54%</td><td class="n">13%</td></tr>
+    <tr><td class="n">6</td><td>LA</td><td>ARI</td><td class="n">17.0</td><td class="n">8.62</td><td class="n">8.0</td><td class="n">16.0</td><td class="n">61%</td><td class="n">13%</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="col">
+  <p>Every one is an opponent implied total between <strong>16.5 and 18.0</strong>. That is the whole board, and there is no second criterion worth applying.</p>
+  <p>Note the spread. The single best matchup available all season has a <strong>median of 8</strong> and a 90th percentile of 17, with an <strong>11% chance of an outright bust</strong>. Even a perfect matchup is a coin flip between a dull week and a good one. This is why the distribution is the product and the point estimate is not.</p>
+  <div class="call">
+    <p class="h">On double counting, which the brief warned about</p>
+    <p>Implied team total correlates <strong>0.820</strong> with the spread and <strong>0.576</strong> with the game total, and <code>implied_total == (total + spread) / 2</code> to machine precision. A defense facing a low implied total, a large spread <em>and</em> a low opposing passing-TD prop has not received three pieces of evidence. It has received one, three times.</p>
+  </div>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>Does the second defense pay for its pick?</h2></div>
+    <p class="lede">Holding one defense fixed, its best drafted partner against simply streaming the best undrafted defense each week.</p>
+  </section>
+  <div class="nums">
+    <div class="num pos"><span class="v">+1.61</span><span class="k">Points over weeks 1&ndash;6, se 0.24, positive for 17 of 17</span></div>
+    <div class="num neg"><span class="v">1.31&ndash;5.19</span><span class="k">What the forgone pick returns over the same six weeks</span></div>
+    <div class="num acc"><span class="v">59.5%</span><span class="k">Share of a pick's full-season value landing in weeks 1&ndash;6</span></div>
+  </div>
+  <p>The first version of this comparison set six weeks of D/ST against a <em>full season</em> of a skill player, which is not a comparison. The critic pass built the missing curve: pick value truncated at week 6, with replacement re-derived on six-week totals. The six-week share turned out to be <strong>59.5%</strong> of full-season value, not the 37.5% naive proration assumes &mdash; it had to be computed, not reasoned.</p>
+  <p><strong>The direction survives but was overstated, and it reverses at the tail.</strong> Net &minus;1.6 to &minus;3.6 before pick 145, &minus;1.1 at picks 145&ndash;156, and <strong>+0.3 after pick 157</strong>. A very late defense roughly breaks even; anything earlier does not. <span class="chip i">inferred</span></p>
+  <p>It is still not perfectly clean: median usable points above replacement is <strong>0.0 in every bucket</strong>, so this is a lottery mean against a near-certainty, and the D/ST side is censored at week 6 rather than complete.</p>
+
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>What to actually do</h2></div>
+    <ul>
+      <li><strong>Do not draft a defense early.</strong> Nothing about defensive quality predicts well enough to justify it, and defensive touchdowns are literally random.</li>
+      <li><strong>Draft one defense very late, or none.</strong> The second drafted defense only breaks even after pick 157.</li>
+      <li><strong>Stream on opponent implied team total, and only that.</strong> It beats every model built here, including the ones that know defensive form, opponent offence quality and the opposing quarterback.</li>
+      <li><strong>Target 16.5&ndash;18.0 implied opponent totals.</strong> That is the whole board.</li>
+      <li><strong>Do not agonise over the partner.</strong> Within the top ten pairs, the choice is worth about 7% of a single pair's own spread.</li>
+      <li><strong>Expect variance.</strong> The best matchup available has a median of 8 and an 11% bust rate. Streaming is a distribution, not a plan.</li>
+    </ul>
+  </section>
+
+  <hr class="end">
+  <p class="foot">Full report, including the 33-claim verification table and every marked correction: <code>dst-streaming/research/DST_STREAMING_RESEARCH.md</code>. Data: nflverse (team stats, schedules, closing betting lines), Fantasy Football Calculator ADP, Kalshi. Total data cost: $0. Scoring: CBS/Yahoo points-allowed tiers, with ESPN tiers tested alongside (correlation 0.9899).</p>
+</div>
+</div>
