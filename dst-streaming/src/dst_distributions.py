@@ -263,6 +263,11 @@ def distributions(sim: DstSim, df: pl.DataFrame, n_sims: int = 3000,
     frames, ens = [], []
     for _key, wk in df.sort(["season", "week"]).group_by(
             ["season", "week"], maintain_order=True):
+        # ponytail: defenses within a week are drawn independently, so the
+        # mechanical link between the two sides of one game (my points allowed
+        # is your points scored) is ignored. Only matters for P(top-N) when both
+        # halves of one game are contenders in the same week; couple them if the
+        # pairing engine ever starts two defenses from the same game.
         S = _simulate(sim, wk, n_sims, rng)
         q = np.percentile(S, _PCTS, axis=0)
         rank = (-S).argsort(axis=1).argsort(axis=1) + 1     # 1 = best that week

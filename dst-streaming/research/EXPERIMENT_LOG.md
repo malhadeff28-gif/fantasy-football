@@ -18,7 +18,7 @@ Verdicts: **KEEP** / **REJECT** / **UNCERTAIN**.
 
 ### DST-001 - scoring validated
 
-8,096 defense-weeks, 2018-2025. Points-allowed tiers behave monotonically:
+4,222 defense-weeks, 2018-2025. (CORRECTION 2026-08-18: this was first logged as 8,096, a figure never actually observed - the dst001 output was piped through `tail` and the panel-size line scrolled past unseen. Verified: 2,127 REG games x 2 = 4,254 possible, 4,222 retained after joining market context.) Points-allowed tiers behave monotonically:
 shutouts (n=44) average 20.07 fantasy points, 35-plus allowed (n=499) average
 -0.43. Top seasons are historically recognisable - 2018 CHI 180, 2019 NE 208,
 2021 DAL 178, 2023 DAL/BAL 171 - which is the check that matters, because a
@@ -142,3 +142,82 @@ Three independent routes - defensive form, opponent offence quality, and now
 opposing-QB identity - all fail to improve on knowing the opponent implied
 team total. That convergence is itself the finding: **for D/ST, the market
 has already priced everything a manager could look up.**
+
+---
+
+## DST-005 - how fast does preseason knowledge decay?
+
+| ID | Question | Result | Verdict |
+| --- | --- | --- | --- |
+| DST-005 | Half-life of preseason defensive knowledge | ~6.5 weeks, CI [1.8, >50] | **UNCERTAIN** |
+| DST-005b | Should defenses be drafted on last year rankings? | No | **REJECT** |
+
+**Half-life of preseason knowledge: about 6.5 weeks, 95% CI [1.8, more than
+50].** That interval is the honest answer - a single week correlation rests on
+roughly 200 defense-weeks, so its standard error is about half the effect
+size. Point estimates: own D/ST points per game 6.5 weeks, own stinginess 6.6,
+opponent prior offence 17.1.
+
+**The market shows no decay at all** - the lowest-AIC functional form is a
+constant. That is the sanity check that the method works: a forward-looking
+price should not decay the way a backward-looking rating does.
+
+Because an exponential fit is a modelling choice, the same question was asked
+form-free: correlation drops from **+0.139 in weeks 1-6 to +0.058 in weeks
+7-17**, a drop of +0.082 [+0.013, +0.151], P(drop > 0) = 0.988. Preseason
+defensive knowledge loses more than half its value after week 6.
+
+### Is weeks 1-6 the right window? Yes on decay grounds, but the framing
+### oversells what is inside it
+
+The decay is real and concentrated exactly there - if anything weeks 1-4 is
+sharper. But **the preseason signal is weak everywhere**: r about 0.14 and 55%
+pairwise accuracy even in weeks 1-6. And in every window including week 1 the
+market beats every preseason rating - **preseason at its best (weeks 1-3,
+55.1%) loses to the market at its worst (weeks 1-3, 58.6%)**.
+
+So the case for weeks 1-6 rests on the original argument in the plan - that
+lookahead betting lines exist for that window and vanish afterwards - and NOT
+on prior-season team quality. **Drafting defenses on last year rankings is
+rejected.**
+
+In-season ratings turned out flat rather than decaying (own defense |r| about
+0.09, opponent offence |r| about 0.15 across all ten lags), the same
+opponent-dominates asymmetry DST-002 found.
+
+## DST-006 - outcome distributions, and they are calibrated
+
+| ID | Question | Result | Verdict |
+| --- | --- | --- | --- |
+| DST-006 | Can D/ST outcome distributions be calibrated? | Yes | **KEEP** |
+
+3,230 walk-forward out-of-sample defense-weeks across 107 weeks. Coverage of
+the published percentiles is **10.2 / 25.8 / 51.9 / 77.0 / 91.0** against a
+nominal 10 / 25 / 50 / 75 / 90 - within 0.2 to 2.0 pp everywhere, against a
+binomial standard error of 0.53 pp. **21 of 23 reliability bins contain the
+prediction**, which is what chance produces at 95%. P(top-12) is calibrated in
+every bin and P(bust) in every bin.
+
+Discrimination is real as well as calibration: AUC for top-12 is 0.632 against
+0.510 for climatology.
+
+A PIT Kolmogorov-Smirnov test formally rejects uniformity (KS 0.0297,
+p = 0.007), but that is power at n = 3,230 - the largest CDF departure anywhere
+is 3 pp. Reported rather than hidden.
+
+**The component design was earned, not asserted.** Paired CRPS bootstrapped
+over weeks, every rival worse with an interval clearing zero: independent
+components +0.030, total-only +0.011, climatology +0.145, Gaussian copula
++0.006. The agent switched from a Gaussian to an **empirical copula** after
+diagnosing the Gaussian version as 3.5% too narrow and under-skewed; the
+empirical version is less code and fixes it (simulated sd 5.66 and skew 0.87
+against actual 5.53 and 0.85).
+
+**One documented defect:** every variant is +0.25 points optimistic, but
+climatology carries +0.19 of that - so the bulk is the league scoring less in
+test seasons than training ones, not model error. Recency weighting was tested
+as a fix, made things marginally worse, and defaults off.
+
+**Thresholds are derived, not picked:** bust is 2 points or fewer (the median
+weekly DST-24 line - the waiver wire beat you), spike is 14 or more (the 89th
+percentile, past the median weekly DST-6 line of 11).

@@ -65,6 +65,15 @@ _CBS_SKILL = ["player", "games", "pass_att", "completions", "pass_yds",
               "rush_yds", "rush_avg", "rush_td", "fumbles_lost",
               "cbs_fantasy_points", "cbs_fppg"]
 
+# CBS publishes a different column set per position; QB is not the template.
+_CBS_RB = ["player", "games", "rush_att", "rush_yds", "rush_avg", "rush_td",
+           "targets", "receptions", "rec_yds", "rec_ypg", "rec_avg", "rec_td",
+           "fumbles_lost", "cbs_fantasy_points", "cbs_fppg"]
+_CBS_WRTE = ["player", "games", "targets", "receptions", "rec_yds", "rec_ypg",
+             "rec_avg", "rec_td", "rush_att", "rush_yds", "rush_avg", "rush_td",
+             "fumbles_lost", "cbs_fantasy_points", "cbs_fppg"]
+_CBS_SCHEMA = {"QB": _CBS_SKILL, "RB": _CBS_RB, "WR": _CBS_WRTE, "TE": _CBS_WRTE}
+
 
 def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
     """CBS season projections with component stats retained.
@@ -79,11 +88,12 @@ def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
                      headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
                      timeout=45)
     r.raise_for_status()
+    schema = _CBS_SCHEMA.get(pos.upper(), _CBS_SKILL)
     rows = re.findall(r'<tr class="TableBase-bodyTr">(.*?)</tr>', r.text, re.S)
     recs = []
     for row in rows:
         cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
-        if len(cells) < len(_CBS_SKILL):
+        if len(cells) < len(schema):
             continue
         vals = [" ".join(re.sub(r"<[^>]+>", " ", c).split()) for c in cells]
         parts = vals[0].split()
@@ -95,7 +105,7 @@ def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
             except Exception:
                 return 0.0
 
-        rec = {c: num(i) for i, c in enumerate(_CBS_SKILL) if c != "player"}
+        rec = {c: num(i) for i, c in enumerate(schema) if c != "player"}
         # cell repeats as "J. Allen QB BUF Josh Allen QB BUF"; the full name is
         # the segment between the first and second "<POS> <TEAM>" marker
         marker = f"{pos} {team}"

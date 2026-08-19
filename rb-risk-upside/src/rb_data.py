@@ -105,6 +105,24 @@ def rb_weekly(seasons: list[int]) -> pl.DataFrame:
     return s.with_columns(scoring.skill_points(s).alias("fp"))
 
 
+def cbs_nonppr(season: int = TARGET_SEASON) -> pl.DataFrame:
+    """CBS RB projections rescored to THIS league.
+
+    CBS publishes under a PPR configuration; its `cbs_fantasy_points` is not
+    this league's number, so the components are rescored.
+    """
+    s = scoring.Scoring()
+    c = markets.load_cbs_projections(season, "RB")
+    return c.with_columns(
+        (pl.col("rush_yds") * s.rush_yds + pl.col("rush_td") * s.rush_td
+         + pl.col("rec_yds") * s.rec_yds + pl.col("rec_td") * s.rec_td
+         + pl.col("fumbles_lost") * s.fumble_lost).alias("cbs_std_points")
+    ).with_columns(
+        (pl.col("cbs_std_points") / pl.col("games").clip(lower_bound=1)).alias("cbs_std_ppg"),
+        pl.col("cbs_std_points").rank("ordinal", descending=True).alias("cbs_rb_rank"),
+    )
+
+
 def pfr_crosswalk() -> pl.DataFrame:
     """snap_counts is keyed by pfr id; everything else by gsis. Bridge them."""
     p = nfl_data.load_players()
