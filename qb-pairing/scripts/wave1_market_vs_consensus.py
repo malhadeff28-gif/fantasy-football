@@ -175,10 +175,14 @@ def prior_season_stats(seasons: list[int]) -> pl.DataFrame:
         & (pl.col("season_type") == "REG")
         & (pl.col("attempts") >= pm.MIN_ATT)
     ).select("player_id", "season", "fantasy_points")
-    return st.group_by(["player_id", "season"]).agg(
-        pl.col("fantasy_points").mean().alias("ppg"),
-        pl.len().alias("g"),
-    )
+    # Determinism fix (2026-08-18, QB-021 skeptic): an unordered group_by let
+    # floating-point summation order vary between runs, drifting ppg by ~1e-15
+    # -- enough to flip a RidgeCV alpha and change reported accuracy. Sorting
+    # the input fixes the summation order; maintain_order fixes the output.
+    return (st.sort(["player_id", "season", "fantasy_points"])
+              .group_by(["player_id", "season"], maintain_order=True)
+              .agg(pl.col("fantasy_points").mean().alias("ppg"),
+                   pl.len().alias("g")))
 
 
 def build_preseason_panel() -> tuple[pl.DataFrame, pl.DataFrame]:

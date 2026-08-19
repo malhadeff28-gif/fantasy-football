@@ -448,8 +448,11 @@ def q22_robustness(w: pl.DataFrame) -> tuple[pl.DataFrame, pl.DataFrame]:
         d = o.drop_nulls(subset=base_x + ["form_resid"])
         xs = list(base_x)
         if extra_col is not None:
+            before = set(d.columns)
             dd = d.to_dummies(extra_col)
-            new = [c for c in dd.columns if c.startswith(f"{extra_col}_")][1:]
+            # only the freshly created dummy columns; `team_spread` already
+            # starts with "team_" and is collinear with ITT and total_line
+            new = [c for c in dd.columns if c not in before][1:]
             d, xs = dd, xs + new
         res, n = ols(d, "form_resid", xs, cluster="game_id")
         frows_fe.append({"spec": lab, "n": n, "coef": float(res.params[1]),
@@ -815,6 +818,78 @@ def job_qb023() -> None:
         print(f"{r['pick_from']:>3}-{r['pick_to']:<8}{r['n_indep']:>6}{r['n_committed']:>6}"
               f"{r['indep_mean']:>9.2f}{r['committed_mean']:>11.2f}{r['diff']:>8.2f}"
               f"{r['pct_diff']:>8.1f}{str(r['committed_in_ci']):>7}")
+
+    # ---- where does the n gap come from? ---------------------------------
+    print("\nthe committed curve carries 1,142 players; this rebuild carries")
+    print(f"{int(primary['n'].sum())}. Testing whether a NAIVE (raw-string) name join")
+    print("explains the gap, since late picks have the messiest names:")
+    adp_raw = load_adp().with_columns(pl.col("position").replace(POS_MAP).alias("pos"))
+    tot_raw = season_totals(16)
+    naive = (adp_raw.filter(pl.col("pos").is_in(["QB", "RB", "WR", "TE"]))
+             .join(tot_raw.select(pl.col("player_display_name").alias("name"),
+                                  "position", "season", "pts").unique(
+                       subset=["name", "position", "season"]),
+                   left_on=["name", "pos", "season"],
+                   right_on=["name", "position", "season"], how="left"))
+    naive = naive.with_columns(pl.col("adp").floor().cast(pl.Int32).alias("pick")) \
+                 .with_columns(((pl.col("pick") - 1) // 12).alias("bkt"))
+    nj = (naive.group_by("bkt").agg(
+        pl.len().alias("n_drafted"),
+        pl.col("pts").is_not_null().sum().alias("n_matched_naive")).sort("bkt"))
+    norm = (j16.with_columns(pl.col("adp").floor().cast(pl.Int32).alias("pick"))
+            .with_columns(((pl.col("pick") - 1) // 12).alias("bkt"))
+            .group_by("bkt").agg(pl.col("pts").is_not_null().sum()
+                                 .alias("n_matched_normalised")).sort("bkt"))
+    nj = nj.join(norm, on="bkt", how="left").join(
+        committed.select("bkt", pl.col("n").alias("n_committed")), on="bkt", how="left")
+    print(f"{'bucket':<10}{'drafted':>9}{'naive join':>12}{'normalised':>12}{'committed':>11}")
+    print("-" * 78)
+    for r in nj.to_dicts():
+        print(f"{r['bkt']:<10}{r['n_drafted']:>9}{r['n_matched_naive']:>12}"
+              f"{r['n_matched_normalised']:>12}"
+              f"{r['n_committed'] if r['n_committed'] is not None else '-':>11}")
+    print(f"totals: drafted {int(nj['n_drafted'].sum())}, naive-join "
+          f"{int(nj['n_matched_naive'].sum())}, normalised-join "
+          f"{int(nj['n_matched_normalised'].sum())}, committed "
+          f"{int(committed['n'].sum())}")
+    nj.write_csv(OUT / "qb023_join_gap.csv")
+
+    # is the ADP universe itself identical to the one the committed run used?
+    cached = REPO / "shared" / "nfl-data" / "cache" / "raw" / "ffc_adp_all_2018_2025.parquet"
+    if cached.exists():
+        c = pl.read_parquet(cached)
+        mine = load_adp()
+        same = (c.height == mine.height and
+                sorted(c["season"].to_list()) == sorted(mine["season"].to_list()))
+        j = (mine.select("season", "key", pl.col("adp").alias("adp_mine"))
+             .join(c.select("season", "key", pl.col("adp").alias("adp_cached")),
+                   on=["season", "key"], how="inner"))
+        md = float((j["adp_mine"] - j["adp_cached"]).abs().max()) if j.height else np.nan
+        print(f"\nADP input check vs the committed cache: rows {mine.height} vs "
+              f"{c.height} (identical={same}); {j.height} keys join, max |ADP "
+              f"difference| = {md}")
+        print("=> the draft-cost inputs are the same data; any divergence is on")
+        print("   the realised-points / join side, not the ADP side.")
+
+    # does a coverage difference of this size even move the curve?
+    naive_curve = curve(
+        j16.join(naive.select("season", "key", pl.col("pts").alias("pts_naive")),
+                 on=["season", "key"], how="left")
+        .filter(pl.col("pts_naive").is_not_null())
+        .drop("pts_naive"), unmatched="drop", pick_rule="floor")
+    cov = (primary.select("bkt", "pick_from", pl.col("mean_usable_par").alias("full_join"))
+           .join(naive_curve.select("bkt", pl.col("mean_usable_par").alias("naive_join")),
+                 on="bkt", how="left"))
+    cov = cov.with_columns((pl.col("naive_join") - pl.col("full_join")).alias("diff"))
+    print("\nsensitivity of the curve to losing the hard-to-match players:")
+    print(f"{'picks':<10}{'full join':>11}{'naive join':>12}{'diff':>8}")
+    print("-" * 78)
+    for r in cov.to_dicts():
+        if r["naive_join"] is None:
+            continue
+        print(f"{r['pick_from']:<10}{r['full_join']:>11.2f}{r['naive_join']:>12.2f}"
+              f"{r['diff']:>8.2f}")
+    cov.write_csv(OUT / "qb023_join_sensitivity.csv")
 
     # ---- specification grid ---------------------------------------------
     print("\nspecification grid -- what each modelling choice is worth:")

@@ -26,7 +26,10 @@ FEATURES = [
     "form_rush_att",
     "implied_team_total",  # strongest market signal (r = 0.150 with residual)
     "total_line",
-    "spread_abs",
+    # spread_abs REMOVED 2026-08-18 (QB-021 skeptic). Worth -0.01 pp of
+    # start/sit accuracy; dropping it IMPROVES the market increment from
+    # +1.85 to +1.89 pp. Near-redundant by construction, since
+    # implied_team_total == (total_line + team_spread) / 2 to machine zero.
     "is_home",             # +1.1 pt home/away spread
     "indoors",             # +1.1 pt indoor/outdoor spread
 ]

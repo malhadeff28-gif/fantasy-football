@@ -220,7 +220,7 @@ form or more features derived from the same box scores.
 | ID | Target | Outcome | Verdict |
 | --- | --- | --- | --- |
 | QB-020 | QB-012 economics (+9.7 / +30.1) | Sign reverses when QB1 is held fixed | **BROKEN** |
-| QB-021 | QB-016 market increment | agent running | pending |
+| QB-021 | QB-016 market increment | Survives a stronger baseline and a hindsight ceiling; sub-claims corrected | **KEEP with amendments** |
 | QB-022 | QB-008 weather effects | agent running | pending |
 | QB-023 | Independent economics replication | agent running | pending |
 
@@ -296,3 +296,88 @@ or the 75th-percentile stress test. At the honest 60th percentile, +9.7 becomes
 approximately zero and probably slightly negative, with an uncertainty band
 wider than the effect. QB-011 survives directionally and is the only member of
 this family that clears zero. The insurance argument is retired.
+
+
+### QB-021 - the market increment survives, three of my claims did not
+
+**Attack 1, stronger baseline: survives completely.** A six-rung proxy ladder
+added prior-season efficiency (YPA, TD and INT rate, CPOE, EPA per play, sack
+rate, rush volume), roster continuity, team offensive environment, an
+age/experience/draft-capital curve and three-season weighted averages - 47
+features against QB-016's 8. The increment did not shrink:
+
+| Proxy | OOS Spearman | Baseline acc | Market increment |
+| --- | --- | --- | --- |
+| prev PPG only | 0.462 | 59.49% | +2.95 pp |
+| ADP only | 0.532 | 60.93% | +2.02 pp |
+| QB-016 spec | 0.556 | 61.13% | **+1.85 pp** (t 5.30) |
+| + continuity/age | **0.577** | **61.30%** | **+1.85 pp** (t 11.46) |
+| + multiseason | 0.570 | 61.04% | +2.04 pp (t 8.85) |
+
+**39 extra preseason features buy 0.18 pp of baseline.** Preseason information
+is already exhausted at the simple spec, which is itself a finding.
+
+**Attack 2, the hindsight ceiling: survives, but this is where it weakens.**
+
+| Ceiling | Baseline acc | Increment | t | Seasons positive |
+| --- | --- | --- | --- | --- |
+| QB-016 proxy | 61.13% | +1.85 pp | 5.30 | 6/6 |
+| Leave-one-out season oracle | 63.21% | +1.35 pp | 7.22 | 6/6 |
+| **Hindsight-refitted preseason model (binding)** | 64.75% | **+0.55 pp** | **2.25** | **5/6** |
+| Full-season oracle (contaminated, invalid) | 68.53% | +0.13 pp | 1.41 | 4/6 |
+
+**73% of the headline survives the LOO oracle; 30% survives the binding
+ceiling.** Implied team total keeps about 86% of its standardised coefficient
+even when the baseline is an oracle that already knows the season answer.
+
+### Corrections to what I previously reported
+
+1. **The r = 0.867 CBS validation was near-worthless.** Raw negative-log ADP
+   alone correlates 0.845 with the CBS board; the proxy adds 0.013. It showed
+   the proxy is *ADP-shaped* like CBS, not that it is a good projection. The
+   rank statistic (0.787) is the relevant one, not Pearson. Stronger proxies
+   are *less* CBS-like while being *more* accurate.
+2. **The week 10-18 concentration is BROKEN.** Pre-registered and tested on
+   held-out seasons 2014-2019 (panel extended back to 2012; QB-016 never saw
+   them): difference-in-differences **+0.03 pp, SE 1.10, t 0.15, 3 of 6
+   seasons**, CI [-2.68, +3.00]. On the generating set it had been +2.60 pp,
+   t 6.27, 6/6. A textbook exploratory false positive, and the largest
+   held-out bucket is weeks 5-9, not 10-18.
+3. **"The projection is worth -0.16 pp" was over-stated.** Player-clustered CI
+   is [-0.69, +0.39]. The correct phrasing is *indistinguishable from zero*,
+   not *worth nothing*.
+
+### Revised numbers
+
+- Headline **+1.85 pp**. Binding uncertainty is the **player-clustered SE of
+  0.48**, 38% wider than the 0.35 I reported. Widest 95% CI [0.97, 2.87].
+  Excludes zero under all four clusterings.
+- **Implied team total alone: +1.66 pp** (t 4.25, 6/6) - 90% of the
+  three-variable effect. `implied_team_total == (total_line + spread) / 2` to
+  machine zero.
+- **`spread_abs` is worth -0.01 pp and dropping it improves the model to
+  +1.89 pp.** Removed from `models/projection.py`; phase 7 accuracy rose
+  62.89% to 62.91% and capture 12.0% to 12.3%.
+- Out-of-sample replication on the unseen 2014-2019 seasons: **+2.39 pp**
+  (t 5.15, 6/6).
+- Sensitivity not previously reported: extending the training window from
+  2018+ to 2012+ moves the 2020-2025 increment from +1.85 to +1.45 pp.
+- **Placebo check (agent addition):** non-market weekly context - home,
+  indoors, rest, division, opponent defence - is worth +0.34 pp, t 0.98, 3/6,
+  and is fully subsumed by the market. So this is not a generic
+  weekly-variable effect; it is specifically market information.
+
+### Bugs found and fixed
+
+`prior_season_stats` used an unordered group_by, letting floating-point
+summation order vary between runs and drifting prior-season PPG by about
+1e-15 - enough to flip a RidgeCV alpha and change reported accuracy. QB-016
+was therefore not bit-reproducible. Fixed by sorting the input and setting
+`maintain_order=True`.
+
+### Unresolved threat
+
+The betting lines in the cache are **closing** lines; no opening line exists
+in nflverse. A manager setting a lineup early in the week sees a different
+number. This is unchanged from QB-016 and remains the largest open question
+about the practical value of the increment.
