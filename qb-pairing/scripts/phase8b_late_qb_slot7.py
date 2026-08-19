@@ -416,7 +416,7 @@ def main() -> int:
     for r in d.filter(pl.col("bye_clash")).head(5).to_dicts():
         print(f"    {r['qb1']} + {r['qb2']}  (both bye {r['bye1']})")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     ok.write_csv(out / f"late_qb_slot{SLOT}_pairs_2026.csv")
     print(f"\nwrote outputs/late_qb_slot{SLOT}_pairs_2026.csv")
     return 0

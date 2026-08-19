@@ -207,7 +207,7 @@ def study_c(p: pl.DataFrame) -> None:
     print("pairing model to discover -- the diversification is essentially free,")
     print("and choosing partners for 'complementary schedules' adds little to it.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase3_complementarity.csv")
     print(f"\nwrote outputs/phase3_complementarity.csv")
 

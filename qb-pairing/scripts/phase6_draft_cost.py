@@ -249,7 +249,7 @@ def main() -> int:
         print("its pick, and the retired +9.7 / +30.1 figures were an artefact of")
         print("comparing strategies that did not share a QB1.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase6_strategies.csv")
     curve.write_csv(out / "phase6_pick_value_curve.csv")
     print(f"\nwrote outputs/phase6_strategies.csv and phase6_pick_value_curve.csv")

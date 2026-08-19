@@ -221,7 +221,7 @@ def run() -> int:
     print(" a tiny MAE gain that moves start/sit accuracy is still useful.")
     print(BAR)
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     pl.DataFrame([
         {"model": k, **{kk: float(vv) for kk, vv in v.items()}}
         for k, v in results.items()

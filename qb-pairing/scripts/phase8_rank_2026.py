@@ -212,7 +212,7 @@ def main() -> int:
     print("found prior-season defensive ratings explain 0.39% of QB variance, so no")
     print("playoff-schedule bonus is applied. Doing so would be decoration.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase8_pairs_2026.csv")
     q.sort("adp").write_csv(out / "phase8_qb_board_2026.csv")
     print(f"\nwrote outputs/phase8_pairs_2026.csv and phase8_qb_board_2026.csv")

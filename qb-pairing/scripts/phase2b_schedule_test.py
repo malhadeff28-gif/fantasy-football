@@ -239,7 +239,7 @@ def test_c(p: pl.DataFrame) -> None:
     print("Phase 5 will measure this properly with real pregame projections")
     print("rather than this interpolation.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase2b_pair_structural_value.csv")
     print(f"\nwrote outputs/phase2b_pair_structural_value.csv")
 

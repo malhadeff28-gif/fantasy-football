@@ -163,7 +163,7 @@ def main() -> int:
     print("rest of a pair's value is availability insurance that any second")
     print("quarterback would supply.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     pl.DataFrame([{"rule": r, "pts_per_season": float(np.mean(totals[r])),
                    "accuracy_pct": hits[r][0] / hits[r][1] * 100 if hits[r][1] else None}
                   for r in RULES]).write_csv(out / "phase7_decision_rules.csv")

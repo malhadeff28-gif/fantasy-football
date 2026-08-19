@@ -21,7 +21,7 @@ Detailed narrative in `RESEARCH_LOG.md`; summarised here as formal records.
 | QB-005 | Does prior-season defense predict current-season QB output? | Barely | r=0.063, 0.39% variance | yes | REJECT |
 | QB-006 | Do two QBs weekly outcomes correlate? | No | r=+0.006 over 2,163 pairs | n/a | REJECT |
 | QB-007 | Do QB-specific matchup effects replicate? | No | split-half r=+0.065 | yes | REJECT |
-| QB-008 | Which scheduling factors are real? | Wind, venue, home/away only | wind -1.61 pts, t=-3.45 | yes | KEEP |
+| QB-008 | Which scheduling factors are real? | Venue and home/away; wind revised down | wind -1.48, t=-2.53 | yes | **UNCERTAIN (QB-022)** |
 | QB-009 | Does game competitiveness shift opportunity pregame? | No | attempts flat across spreads | yes | REJECT |
 | QB-010 | Do weeks 14-18 differ from other weeks? | No | -0.02, t=-0.07 | yes | REJECT |
 | QB-011 | What is a second QB worth? | +12.0 pts/season | 25.4% of ceiling | yes | KEEP |
@@ -221,8 +221,8 @@ form or more features derived from the same box scores.
 | --- | --- | --- | --- |
 | QB-020 | QB-012 economics (+9.7 / +30.1) | Sign reverses when QB1 is held fixed | **BROKEN** |
 | QB-021 | QB-016 market increment | Survives a stronger baseline and a hindsight ceiling; sub-claims corrected | **KEEP with amendments** |
-| QB-022 | QB-008 weather effects | agent running | pending |
-| QB-023 | Independent economics replication | agent running | pending |
+| QB-022 | QB-008 weather effects | Estimator was wrong; effect real but small and rare | **WEAKENED** |
+| QB-023 | Independent economics replication | Curve replicates; two divergences found | **REPLICATES** |
 
 ### QB-020 - the headline economics do not survive
 
@@ -381,3 +381,84 @@ The betting lines in the cache are **closing** lines; no opening line exists
 in nflverse. A manager setting a lineup early in the week sees a different
 number. This is unchanged from QB-016 and remains the largest open question
 about the practical value of the increment.
+
+### QB-022 - the weather effect was mis-estimated
+
+Every attack aimed at missingness failed. Of 2,654 rows carrying a wind
+reading, 2,652 are already outdoor games, so domes never contaminated the
+estimate. Restricted to outdoor games, rows with and without a reading are
+identical on the outcome (form-residual difference -0.020, t = -0.05) and on
+every market variable. The gap is a vendor or scrape artefact concentrated in
+early weeks and two bad seasons (2022 at 51% coverage). Inverse-probability
+reweighting moves the estimate only from -1.608 to -1.517, and it survives
+stadium, team and season fixed effects plus a permutation null corrected for
+the threshold search (p = 0.0040).
+
+**What broke it was my own estimator, on two counts.**
+
+1. The published figure was a **raw bucket mean, not a contrast**, and its
+   standard errors treated two quarterbacks in the same game as independent.
+   n = 304 QB-weeks is really **153 games**. Corrected: **-1.484, se 0.586,
+   t = -2.53, CI [-2.63, -0.33]** against the published -1.61, t = -3.45.
+2. **The wind 8-14 mph claim is BROKEN**: -0.448, se 0.348, **t = -1.29**,
+   CI [-1.13, +0.23]. The published t of -2.39 came entirely from measuring
+   against zero and double-counting games.
+
+It is unstable across eras, -0.835 (se 0.766) in 2018-21 against -2.374
+(se 0.908) in 2022-25, and significant in only 3 of 8 seasons.
+
+**The claim that weather was the largest scheduling effect is false.** Home
+field is +1.32 (t = 4.38) on the same sample and applies to every game rather
+than 7% of them.
+
+**Actionable? Technically yes, practically no.** nflverse records observed
+game-time weather rather than the forecast, but the forecast was public: the
+game total is 1.20 points lower in high-wind games (t = -2.96), and about 80%
+of the effect survives a realistic 2-4 mph forecast error. There is no double
+counting either, since controlling for implied team total leaves the
+coefficient essentially unchanged (-1.484 to -1.490).
+
+Frequency is what kills it. Wind at or above 15 mph hits **7.1%** of QB-weeks,
+and only **18.5%** of within-week pairs are close enough on form for a
+1.48-point tiebreak to change the decision. **Upper bound: 0.66 points per
+season**, against +4.9 for the entire start/sit decision.
+
+### QB-023 - the pick-value curve replicates, with two divergences
+
+Rebuilt from the shared loaders with replacement levels derived independently.
+The ADP input is provably identical to the cache (1,574 rows, maximum absolute
+difference **0.0**), and **14 of 15 committed bucket means fall inside a 95%
+season-clustered bootstrap interval** (15 of 15 under an iid interval).
+
+**Divergence 1, confirmed and now fixed: the curve was counting NFL weeks
+17-18**, which this league does not play. Stopping at week 16 moved the curve
+exactly as predicted: picks 1-12 from 69.99 to **67.15** (-4%), picks 13-24
+from 47.24 to **43.38** (-8%). The 2024 QB replacement level fell from 282.0
+to 237.0.
+
+**Divergence 2: player-universe retention.** The committed path keeps 84.0% of
+drafted skill players against 97.9% in the replication, the shortfall growing
+from 2% at picks 1-12 to 20% at 145-156, the signature of name-join failures.
+A sensitivity test moved no bucket by more than 1.3 points, so this does not
+explain the late-bucket gaps; those are noise.
+
+**The substantive correction is to presentation.** From pick 61 onward the
+**median** pick returns exactly zero, and buckets 6 through 13 are not
+statistically distinguishable from one another in either version. Quoting them
+as point estimates was the error. The load-bearing figure is **7.92 points
+above replacement for picks 106-135, 95% CI [5.0, 11.5]**, not the 5-to-8
+range previously stated.
+
+### Where the two skeptics disagree, and how it resolves
+
+QB-023 concluded that the mid-priced-QB1 case (+30.1) survives comfortably,
+because its interval does not overlap the pick cost. **QB-020 supersedes it.**
+QB-023 attacked the pick-cost input while holding my strategy definitions
+fixed; QB-020 showed the comparison itself was invalid, because late pair and
+single value QB do not share a QB1. No pick-cost correction can rescue a
+contrast that was never measuring QB2. Rank-matched after the week-17-18 fix,
+the marginal is **-10.6 points per season, negative at 7 of 7 QB1 ranks**.
+
+The narrower QB-023 point still lands: picks 106-135 return 7.92 points above
+replacement with an interval that **overlaps** the retired +9.7, so even on
+its own terms that figure was never distinguishable from break-even.

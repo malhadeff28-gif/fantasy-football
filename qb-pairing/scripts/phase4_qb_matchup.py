@@ -199,7 +199,7 @@ def split_half_reliability(p: pl.DataFrame) -> None:
         print("\nVERDICT: some individual signal replicates; worth modelling with"
               " shrinkage.")
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase4_split_half.csv")
     print(f"\nwrote outputs/phase4_split_half.csv")
 

@@ -171,7 +171,7 @@ def main() -> int:
     print(" capital spent on QB2.")
     print(BAR)
 
-    out = Path("outputs"); out.mkdir(exist_ok=True)
+    out = Path(__file__).resolve().parents[1] / "outputs"; out.mkdir(exist_ok=True)
     d.write_csv(out / "phase2c_pair_value.csv")
     top = d.with_columns((pl.col("model") - pl.col("solo")).alias("gain")) \
            .sort("gain", descending=True).head(12)

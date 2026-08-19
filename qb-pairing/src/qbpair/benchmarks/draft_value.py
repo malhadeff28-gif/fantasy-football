@@ -41,9 +41,18 @@ def normalise_name(name: str) -> str:
 
 
 def season_totals(seasons: list[int]) -> pl.DataFrame:
-    """Regular-season fantasy totals per player, standard scoring."""
+    """Fantasy totals per player over the weeks THIS LEAGUE actually plays.
+
+    BUG FIX (2026-08-18, found by the QB-023 replication): this previously
+    summed every NFL regular-season week, 1 through 18. This league finishes in
+    week 16, so weeks 17 and 18 are fantasy-irrelevant and were inflating every
+    player total and therefore the whole pick-value curve -- roughly 4% at the
+    top of the draft and 8% in the second round.
+    """
+    last_week = max(LEAGUE.playoff_weeks)
     st = loaders.load_player_stats(seasons).filter(
         (pl.col("season_type") == "REG")
+        & (pl.col("week") <= last_week)
         & pl.col("position").is_in(list(REPLACEMENT_RANK))
     )
     return (
