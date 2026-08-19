@@ -462,3 +462,90 @@ the marginal is **-10.6 points per season, negative at 7 of 7 QB1 ranks**.
 The narrower QB-023 point still lands: picks 106-135 return 7.92 points above
 replacement with an interval that **overlaps** the retired +9.7, so even on
 its own terms that figure was never distinguishable from break-even.
+
+---
+
+## QB-024 - slot 7/12 rerun with all corrections
+
+| ID | Target | Outcome | Verdict |
+| --- | --- | --- | --- |
+| QB-024 | Slot-7 late-QB analysis, corrected inputs | 2026 pair value collapses; the QB2 question becomes answerable | **KEEP** |
+
+The pre-correction configuration reproduces the published slot-7 table to the
+last digit, so every movement below is attributable rather than drift.
+
+| Plan | Before | After | Change |
+| --- | --- | --- | --- |
+| premium QB1 only | 46.3 | 45.5 | -0.8 |
+| premium QB1 + late QB2 | 38.8 | 36.2 | -2.6 |
+| late single QB (pick 79) | 33.8 | 33.9 | +0.1 |
+| late pair (79 + 127) | 23.6 | 22.2 | -1.4 |
+| **2026 top pair net value** | **66.8** | **2.9** | **-63.9** |
+
+### Attribution
+
+**My week-16 fix was half-applied, and the agent caught it.** After I
+corrected `season_totals` to stop at week 16, `phase8b` was still summing QB
+points through week 18 while subtracting a 16-week replacement level: 18 weeks
+of numerator against 16 weeks of denominator. Taken literally that inflates
+every plan by +29 to +33 points. Applied consistently to both sides, the
+week-17-18 issue is worth only -0.8 to +0.2, because it was nearly
+self-cancelling - QB points fell from 370 to 338 while the QB12 replacement
+fell from 273 to 249.
+
+**The pick-cost bug never existed here.** I told the agent to look for the
+phase-6 bucket-gap bug in `phase8b`; it audited and found both lookups already
+rounded and clamped. Worth zero. A counterfactual shows the bug would have
+handed the late pair +2.2 free points had it been present. Fixed anyway by
+collapsing two duplicate lookups into one with an assert guard, verified to
+catch the bug when reintroduced.
+
+**Dropping `spread_abs`** is worth 0.0 to -1.6, confined to pair rows, since it
+only changes which quarterback gets started.
+
+**The insurance premium was deleted rather than re-derived**, which is the
+right call: it interpolated between the retired +9.7 and +30.1, and no premium
+can be derived from a marginal that is negative. A partner is now priced from
+measured parts only - bye coverage, plus a rank-matched choice edge of +1.7
+(was 4.9), minus his pick cost. Result: **0 of 125 feasible 2026 pairs are
+positive, best -2.0**.
+
+### Two further defects found
+
+1. The QB2-timing sweep cells at picks 151 and 162 averaged over 4 and 2
+   seasons rather than 6, part of why that sweep looked so non-monotonic. Now
+   flagged in the output.
+2. The 2026 board compared 17-game CBS season totals against a 16-week
+   replacement level. Rebasing accounts for -29 of the -63.9 collapse.
+
+### The statistics were being done the wrong way, including by me
+
+I reported that plan differences were not distinguishable because unpaired
+standard errors of 15-20 swamped a 22.7 point spread. That was the wrong test.
+**Paired by season**, which removes the shared season effect:
+
+- late pair minus late single = **-11.7 (se 5.5, t = -2.13, negative in 5 of 6
+  seasons)**
+- premium minus late single = +11.6 plus or minus 30.2, still indistinguishable
+
+**The QB2 question is answerable; the QB1 question is not.** And the -11.7
+lands within 1.1 points of the -10.6 rank-matched marginal, from an entirely
+different construction - independent convergence on the same answer.
+
+### 2026 recommendation from pick 7 of 12
+
+ADP refreshed 2026-08-18, 1,466 drafts.
+
+**Take Jalen Hurts at pick 79** (45% he lasts). Fallbacks in order: Brock Purdy
+(78% at 79), Trevor Lawrence (58% at 90), Patrick Mahomes (76% at 90), then
+Jaxson Dart at 114 (68%), the best points-per-pick on the board at half the
+cost. **P(at least one of Hurts, Purdy or Stafford available at 79) = 93%**, so
+the plan rarely fails.
+
+**Do not spend a second pick on a quarterback.**
+
+Hurts, Lawrence, Dart and Purdy hold a top-5 slot under all five sensitivity
+settings. The pick-cost spread across rounds 7-12 is only 4.6 points, so the
+ranking is driven by projected points per game rather than by which late pick
+you spend, which makes it robust to exactly the assumption that destabilised
+the earlier pair board.
