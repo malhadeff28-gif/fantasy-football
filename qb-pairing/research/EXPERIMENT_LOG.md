@@ -50,7 +50,8 @@ Detailed narrative in `RESEARCH_LOG.md`; summarised here as formal records.
 | QB-016b | Does the projection add anything given form + market? | No | -0.16 pp (SE 0.19) | yes | **REJECT** |
 | QB-019 | Do QBs differ in matchup sensitivity? (hierarchical) | No, unidentifiable | LRT p=0.130, singular fit | n/a | **REJECT** |
 | QB-019b | Do QBs differ in market sensitivity? (never tested before) | No | LRT p=0.495, singular fit | n/a | **REJECT** |
-| QB-017 | Does nonlinear structure exist beyond ridge? | agent running | | | pending |
+| QB-017 | Does nonlinear structure exist beyond ridge? | No, every tree model lost | -0.27 to -0.56 pp | yes | **REJECT** |
+| QB-017b | Do the top SHAP interactions survive a proper null? | No, false positive | p=0.360 on exhaustive scan | yes | **REJECT** |
 | QB-018 | Do pressure/blitz/NGS/scramble/RZ variables add value? | No | -0.13 pp for all 22 | yes | **REJECT** |
 | QB-018b | Is pressure faced an offensive-line trait? | No, it is a QB trait | QB r=0.526 vs team r=0.320 | n/a | **KEEP** |
 
@@ -145,3 +146,68 @@ advanced stats exist for 2018-2025 only and are keyed by pfr_player_id with a
 100%-complete crosswalk to gsis; NGS `week == 0` rows are season aggregates
 that silently corrupt rolling features, and NGS enforces a 15-attempt minimum
 so 10-14 attempt starts are structurally unreachable.
+
+
+### QB-017 detail (Nonlinear Modeling Agent) - REJECT, and a caught false positive
+
+Ridge baseline reproduced at R2 0.1726, MAE 5.9233, pairwise accuracy 63.78%.
+Every tree model lost to it, walk-forward:
+
+| Model | delta MAE vs ridge | P(better) | delta accuracy |
+| --- | --- | --- | --- |
+| GBM additive (depth-1 stumps) | +0.0286 | 0.07 | -0.49 pp |
+| GBM full (lightgbm) | +0.0292 | 0.07 | -0.56 pp |
+| GBM full (xgboost) | +0.0216 | 0.14 | -0.27 pp |
+| GBM on ridge residuals | +0.0186 | 0.17 | -0.39 pp |
+| 50/50 ridge + GBM blend | -0.0062 | 0.71 | +0.08 pp |
+
+**The depth-1 versus depth-free split is the informative decomposition.**
+Univariate curvature costs 0.029 MAE and interactions add +0.0005 on top of
+that - i.e. nothing. The failure is not that interactions hurt; it is that
+trees cannot even match linear main effects at this sample size. The tuner
+agrees: offered num_leaves in {3, 7, 15} with honest inner folds, it chose 3
+in five of six folds. Ridge is also the best calibrated (slope 0.970 vs 0.922).
+
+### The false positive, and how it was caught
+
+SHAP surfaced `career_fp_mean x implied_team_total` (0.1206) and
+`form_fp_mean x implied_team_total`. Both cleared a raw within-week shuffle
+null at family-wise **p = 0.000 and p = 0.015**. Under a normal workflow that
+ships as a finding.
+
+It is a false positive, caught three independent ways:
+
+1. **Scale-free share statistic.** Observed interaction share 14.6% against a
+   null mean of 29.2%, p = 1.000. The real model is *half* as interaction-driven
+   as a noise-fitting one. The raw SHAP magnitude looked large only because a
+   signal-rich model has more total SHAP mass to distribute - comparing raw
+   magnitudes against a null fitted on noise is the trap.
+2. **Exhaustive out-of-sample scan.** All 171 pairwise products added to ridge,
+   walk-forward, with a max-statistic null over the entire search. The SHAP
+   winners buy +0.0013 and +0.0001 MAE, p = 1.000. The best of all 171
+   (`form_cpoe x rest`) gains +0.0081, which is 0.14% of baseline error, at
+   **p = 0.360**. 37 of 171 pairs improved MAE against 34.1 expected by chance.
+3. **Honest temporal split.** Discover on seasons <= 2021, grade on 2022-2025:
+   all five top candidates *hurt*.
+
+**Methodological lesson, the most important in the project so far:** had this
+stopped after the first permutation null, it would have shipped a false
+positive with p = 0.000 attached. A single null is not enough when the
+statistic itself is scale-dependent.
+
+### Bearing on Wave 0
+
+Wave 0 hand-picked four interactions and found them slightly harmful. All four
+sit in the negative range here, so that conclusion was correct - but Wave 0 was
+not *entitled* to it on the evidence it had. The exhaustive scan plus
+max-statistic null is what actually settles the question.
+
+### The ceiling is real, and where progress must come from
+
+Residual sd 7.4 against outcome sd 8.1: roughly **83% of weekly QB variance is
+unforecastable from this panel**, and the strongest detectable interaction is
+two orders of magnitude too small to matter. Combined with QB-018 (advanced
+tracking variables add nothing because they are redundant with box-score form),
+the conclusion is that progress requires **new information** - pregame starter
+and injury status, weather forecasts, player props - not a richer functional
+form or more features derived from the same box scores.

@@ -156,9 +156,12 @@ def per_week_stats(y: np.ndarray, yhat: np.ndarray,
             iu = np.triu_indices(len(b), 1)
             dy = (yb[:, None] - yb[None, :])[iu]
             dp = (pb[:, None] - pb[None, :])[iu]
-            m = dy != 0
+            m = dy != 0                       # ties in the outcome are not decisions
+            sy, sp = np.sign(dy[m]), np.sign(dp[m])
             tot.append(int(m.sum()))
-            corr.append(int((np.sign(dy[m]) == np.sign(dp[m])).sum()))
+            # a tied prediction is a coin flip, so it scores half. This only
+            # bites the constant baseline; continuous predictions never tie.
+            corr.append(float((sy == sp).sum() + 0.5 * (sp == 0).sum()))
         else:
             tot.append(0)
             corr.append(0)
@@ -652,13 +655,17 @@ def main() -> int:
     print("to overfit noise, which inflates its apparent interactions.")
     blocks_all = week_blocks(panel)
     null_vecs = np.empty((RUN["n_null_a"], len(obs_vec)))
+    null_share = np.empty(RUN["n_null_a"])
     t0 = time.time()
     for i in range(RUN["n_null_a"]):
         y_perm = permute_within_week(y_all, blocks_all, rng)
         mnull = lgb.LGBMRegressor(n_estimators=n_disc, **LGB_FIXED, **disc_cfg)
         mnull.fit(X_all, y_perm)
         ivn = shap.TreeExplainer(mnull).shap_interaction_values(X_sub)
-        null_vecs[i] = rank_pairs(ivn)[iu]
+        pn = rank_pairs(ivn)
+        null_vecs[i] = pn[iu]
+        nm = float(np.abs(ivn).mean(axis=0).diagonal().sum())
+        null_share[i] = pn[iu].sum() / (nm + pn[iu].sum())
         if (i + 1) % 50 == 0:
             print(f"  draw {i + 1}/{RUN['n_null_a']}  ({time.time() - t0:.0f}s)")
     null_max = null_vecs.max(axis=1)
@@ -666,6 +673,7 @@ def main() -> int:
 
     obs_top = float(obs_vec.max())
     fw_p = float((null_max >= obs_top).mean())
+    obs_share = inter_mag / (main_mag + inter_mag)
     print(f"\nfamily-wise test on the strongest pair found:")
     print(f"  observed strongest interaction : {obs_top:.4f} pts "
           f"({pair_names[int(np.argmax(obs_vec))][0]} x "
@@ -673,6 +681,14 @@ def main() -> int:
     print(f"  null max-statistic  mean       : {null_max.mean():.4f} pts")
     print(f"  null max-statistic  95th pct   : {np.percentile(null_max, 95):.4f} pts")
     print(f"  family-wise p-value            : {fw_p:.3f}")
+    print(f"\nscale-free cross-check -- a signal-bearing model attributes more of its")
+    print("total explanation to interactions than a noise-fitting one only if the")
+    print("interaction structure is real, so compare shares rather than magnitudes:")
+    print(f"  observed interaction share     : {obs_share * 100:.1f}%")
+    print(f"  null interaction share, mean   : {null_share.mean() * 100:.1f}%  "
+          f"(95th pct {np.percentile(null_share, 95) * 100:.1f}%)")
+    print(f"  p-value on the share statistic : "
+          f"{float((null_share >= obs_share).mean()):.3f}")
 
     shap_rows = []
     for t in ranked[:20]:
@@ -859,15 +875,22 @@ def main() -> int:
     fig, ax = plt.subplots(1, 2, figsize=(11, 4.2))
     lo = min(y_test.min(), min(p.min() for p in preds.values()))
     hi = max(y_test.max(), max(p.max() for p in preds.values()))
-    ax[0].plot([0, 40], [0, 40], color="0.4", lw=1, ls="--", label="perfect")
+    cvals = [v for k in cal_models for c_ in cal_curves[k]
+             for v in (c_["mean_pred"], c_["mean_actual"])]
+    pad = 0.08 * (max(cvals) - min(cvals))
+    zlo, zhi = min(cvals) - pad, max(cvals) + pad
+    ax[0].plot([zlo, zhi], [zlo, zhi], color="0.4", lw=1, ls="--", label="perfect")
     for k, c in zip(cal_models, ("#1f77b4", "#2ca02c", "#d62728")):
         cv = cal_curves[k]
         ax[0].errorbar([c_["mean_pred"] for c_ in cv], [c_["mean_actual"] for c_ in cv],
                        yerr=[c_["se_actual"] for c_ in cv], marker="o", ms=4,
                        lw=1.4, capsize=2, color=c, label=k)
+    ax[0].set_xlim(zlo, zhi)
+    ax[0].set_ylim(zlo, zhi)
     ax[0].set_xlabel("predicted fantasy points (decile bin mean)")
     ax[0].set_ylabel("actual fantasy points")
-    ax[0].set_title("Calibration, out-of-sample 2020-2025")
+    ax[0].set_title("Calibration, out-of-sample 2020-2025\n"
+                    "(deciles span only 10-23 pts: the models barely move)")
     ax[0].legend(fontsize=8)
     bins = np.linspace(lo, hi, 45)
     ax[1].hist(y_test, bins=bins, alpha=0.35, color="0.5", label="actual")
@@ -1018,7 +1041,10 @@ def main() -> int:
     print(f"trees on the ridge residual                 : dMAE {d_res:+.4f} pts")
     print(f"total (GBM-full - ridge)                    : dMAE {d_mae:+.4f} pts, "
           f"dAcc {d_acc:+.2f} pp")
+    share_p = float((null_share >= obs_share).mean())
     print(f"\nstrongest SHAP interaction, family-wise p   : {fw_p:.3f}")
+    print(f"  but its scale-free share statistic p      : {share_p:.3f} "
+          f"({obs_share * 100:.1f}% observed vs {null_share.mean() * 100:.1f}% null)")
     print(f"best of {len(obs_vec)} OOS interaction gains, family-wise p : {fw_b:.3f}")
     print(f"  that best gain is {obs_delta[best_j]:+.4f} MAE points = "
           f"{obs_delta[best_j] / base_mae * 100:+.2f}% of baseline error, "
@@ -1026,7 +1052,11 @@ def main() -> int:
 
     p_gbm = float(boot.filter(pl.col("model") == gbm_key)["p_better_mae"][0])
     helps = (d_mae < 0) and (p_gbm > 0.95)
-    stat_survives = (fw_p < 0.05) or (fw_b < 0.05)
+    # The raw SHAP magnitude null only counts if the scale-free share null
+    # agrees: a model with real signal has more total SHAP mass to distribute,
+    # so a bigger absolute interaction term is expected even with no extra
+    # interaction structure at all.
+    stat_survives = (fw_p < 0.05 and share_p < 0.05) or (fw_b < 0.05)
     # a term can clear a null and still be worthless. 0.05 MAE points is under
     # 1% of the baseline error and far inside the season-to-season spread.
     material = abs(obs_delta[best_j]) >= 0.05 and (np.array(rep) > 0).sum() >= 5
