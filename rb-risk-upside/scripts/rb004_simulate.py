@@ -83,6 +83,57 @@ def risk_metrics(totals: np.ndarray, rb24: float, rb12: float,
     return m
 
 
+def backtest(sit: pl.DataFrame, out: pl.DataFrame, pool: tuple, th: dict,
+             adp_fn, seasons=(2022, 2023, 2024, 2025), n: int = 3_000) -> pl.DataFrame:
+    """Run the whole pipeline as it would have been run before each season.
+
+    Nothing from the test season or later is available: comparables come only
+    from earlier outcome seasons. Reports interval coverage, which is the thing
+    that actually matters for a risk study, and accuracy against the ADP curve.
+    """
+    joined = sit.join(out, left_on=["gsis_id", "season"],
+                      right_on=["player_id", "season"], how="inner")
+    rows = []
+    for yr in seasons:
+        cand = joined.filter((pl.col("season") == yr) & (pl.col("adp_rb_rank") <= 40)
+                             & pl.col("prior_touches_pg").is_not_null())
+        for r in cand.iter_rows(named=True):
+            t = S.Target(name=r["full_name"], player_id=r["gsis_id"],
+                         team=r["team"], season=yr,
+                         prior={**{c: float(r[c]) for c in S.MATCH},
+                                "switched": int(r["switched"])},
+                         adp=float(r["adp"]), adp_rb_rank=int(r["adp_rb_rank"]))
+            try:
+                c = S.comparables(t, sit, out, k=K)
+            except ValueError:
+                continue
+            if c.height < 10:
+                continue
+            s = S.simulate(t, c, pool, th, n_sims=n, seed=7 + yr)
+            actual = float(r["out_fp_total"])
+            rows.append({"season": yr, "name": t.name, "actual": actual,
+                         "median": s["median"], "p10": s["p10"], "p90": s["p90"],
+                         "p25": s["p25"], "p75": s["p75"],
+                         "adp_pred": adp_fn(t.adp_rb_rank)})
+    b = pl.DataFrame(rows)
+    summ = []
+    for yr in list(seasons) + ["all"]:
+        s = b if yr == "all" else b.filter(pl.col("season") == yr)
+        if s.height == 0:
+            continue
+        ins = ((s["actual"] >= s["p10"]) & (s["actual"] <= s["p90"])).mean()
+        iqr = ((s["actual"] >= s["p25"]) & (s["actual"] <= s["p75"])).mean()
+        below = (s["actual"] < s["median"]).mean()
+        mae_m = float((s["actual"] - s["median"]).abs().mean())
+        mae_a = float((s["actual"] - s["adp_pred"]).abs().mean())
+        summ.append({"season": str(yr), "n": s.height,
+                     "cover_p10_p90": round(float(ins), 3),
+                     "cover_p25_p75": round(float(iqr), 3),
+                     "frac_below_median": round(float(below), 3),
+                     "mae_sim": round(mae_m, 1), "mae_adp_curve": round(mae_a, 1)})
+    return pl.DataFrame(summ)
+
+
 def main() -> None:
     panel = F.load_or_build()
     ss = F.season_rollup(panel, min_games=1)
@@ -238,6 +289,59 @@ def main() -> None:
     print(dist.select("name", "median", "p10", "p25")
           .sort("median", descending=True))
 
+    print("\n", BAR, "\n 5b. HOW MUCH OF THAT RANKING IS REAL?\n", BAR)
+    print(" The Monte Carlo error is tiny. The real uncertainty is that each")
+    print(f" player's distribution rests on {K} comparable seasons. Resampling")
+    print(" those 30 with replacement (200 reps) gives the honest interval:")
+    bs_rows = []
+    rng = np.random.default_rng(4242)
+    draws = {}
+    for t in targets:
+        c = comps[t.name]
+        meds, p12s = [], []
+        for b in range(200):
+            idx = rng.integers(0, c.height, c.height)
+            cb = c[idx.tolist()]
+            s = S.simulate(t, cb, pool, th, n_sims=4_000, seed=int(rng.integers(1e9)))
+            meds.append(s["median"]); p12s.append(s["p_top12"])
+        draws[t.name] = (np.array(meds), np.array(p12s))
+        bs_rows.append({
+            "name": t.name,
+            "median": round(sims[t.name]["median"], 1),
+            "median_lo": round(float(np.percentile(meds, 2.5)), 1),
+            "median_hi": round(float(np.percentile(meds, 97.5)), 1),
+            "P_top12": round(sims[t.name]["p_top12"], 3),
+            "P_top12_lo": round(float(np.percentile(p12s, 2.5)), 3),
+            "P_top12_hi": round(float(np.percentile(p12s, 97.5)), 3)})
+    bsd = pl.DataFrame(bs_rows)
+    print(bsd)
+
+    print("\n pairwise: P(row's median > column's median) over the same resamples")
+    names = [t.name for t in targets]
+    pw = []
+    for a in names:
+        row = {"": a.split()[-1]}
+        for b in names:
+            row[b.split()[-1]] = ("-" if a == b else
+                                  f"{float((draws[a][0] > draws[b][0]).mean()):.2f}")
+        pw.append(row)
+    print(pl.DataFrame(pw))
+    bsd.write_csv(R.OUT / "rb004_comparable_uncertainty.csv")
+
+    print("\n", BAR, "\n 6. IS THE SIMULATOR CALIBRATED? WALK-FORWARD BACKTEST\n", BAR)
+    print(" Every drafted RB (ADP top 40 at the position) in 2022-2025, simulated")
+    print(" using only seasons before his own. If the intervals are honest, ~80%")
+    print(" of realised totals land between p10 and p90 and ~50% below the median.")
+    bt = backtest(sit, out, pool, th, adp_fn)
+    print(bt)
+
+    dist.write_csv(R.OUT / "rb004_distributions.csv")
+    prob.write_csv(R.OUT / "rb004_probabilities.csv")
+    met.write_csv(R.OUT / "rb004_risk_metrics.csv")
+    conv.write_csv(R.OUT / "rb004_convergence.csv")
+    rm.write_csv(R.OUT / "rb004_role_mode_robustness.csv")
+    bt.write_csv(R.OUT / "rb004_backtest.csv")
+
     # ---- plots ----------------------------------------------------------
     fig, ax = plt.subplots(figsize=(9, 5.2))
     for t in targets:
@@ -303,11 +407,7 @@ def main() -> None:
     fig.savefig(R.OUT / "rb004_adp_vs_value.png", dpi=130)
     plt.close(fig)
 
-    dist.write_csv(R.OUT / "rb004_distributions.csv")
-    prob.write_csv(R.OUT / "rb004_probabilities.csv")
-    met.write_csv(R.OUT / "rb004_risk_metrics.csv")
-    conv.write_csv(R.OUT / "rb004_convergence.csv")
-    print(f"\nwritten: 4 csv + 3 png under {R.OUT}")
+    print(f"\nwritten: 6 csv + 3 png under {R.OUT}")
 
 
 if __name__ == "__main__":

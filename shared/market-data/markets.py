@@ -72,7 +72,13 @@ _CBS_RB = ["player", "games", "rush_att", "rush_yds", "rush_avg", "rush_td",
 _CBS_WRTE = ["player", "games", "targets", "receptions", "rec_yds", "rec_ypg",
              "rec_avg", "rec_td", "rush_att", "rush_yds", "rush_avg", "rush_td",
              "fumbles_lost", "cbs_fantasy_points", "cbs_fppg"]
-_CBS_SCHEMA = {"QB": _CBS_SKILL, "RB": _CBS_RB, "WR": _CBS_WRTE, "TE": _CBS_WRTE}
+# Tight ends get a shorter table with no rushing columns: 11 cells, not 15.
+# Verified against the live page 2026-08-18; using the WR schema silently
+# filtered out every TE row.
+_CBS_TE = ["player", "games", "targets", "receptions", "rec_yds", "rec_ypg",
+           "rec_avg", "rec_td", "fumbles_lost", "cbs_fantasy_points",
+           "cbs_fppg"]
+_CBS_SCHEMA = {"QB": _CBS_SKILL, "RB": _CBS_RB, "WR": _CBS_WRTE, "TE": _CBS_TE}
 
 
 def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
@@ -115,7 +121,7 @@ def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
         recs.append(rec)
 
     df = pl.DataFrame(recs)
-    return df.with_columns(
+    df = df.with_columns(
         pl.when(pl.col("player").str.starts_with(pl.col("team") + " "))
         .then(pl.col("player").str.slice(pl.col("team").str.len_chars() + 1))
         .otherwise(pl.col("player")).str.strip_chars().alias("player"),
@@ -123,6 +129,27 @@ def load_cbs_projections(season: int, pos: str = "QB") -> pl.DataFrame:
     ).with_columns(
         pl.col("player").map_elements(normalise_name, return_dtype=pl.String).alias("key")
     )
+
+    # Rescore to THIS league from components. CBS publishes its own total under
+    # a different configuration, so their number is kept for reference only.
+    # Missing component columns are filled with zero so one code path serves
+    # every position.
+    from scoring import Scoring
+    sc = Scoring()
+    comp = {"pass_yds": sc.pass_yds, "pass_td": sc.pass_td,
+            "interceptions": sc.interception, "rush_yds": sc.rush_yds,
+            "rush_td": sc.rush_td, "receptions": sc.rec, "rec_yds": sc.rec_yds,
+            "rec_td": sc.rec_td, "fumbles_lost": sc.fumble_lost}
+    df = df.with_columns([pl.lit(0.0).alias(c) for c in comp if c not in df.columns])
+    total = None
+    for c, w in comp.items():
+        term = pl.col(c).cast(pl.Float64) * w
+        total = term if total is None else total + term
+    return df.with_columns(total.alias("proj_points_league")).with_columns(
+        (pl.col("proj_points_league")
+         / pl.col("games").cast(pl.Float64).clip(lower_bound=1))
+        .alias("proj_ppg_league")
+    ).sort("proj_points_league", descending=True)
 
 
 # --- Kalshi prediction markets (free, forward-only) -------------------------

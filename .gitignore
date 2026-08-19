@@ -15,3 +15,7 @@ data/processed/*
 shared/nfl-data/cache/
 */outputs/*
 !*/outputs/.gitkeep
+
+# Plots are the inspectable part of the research and are small; keep them.
+# Generated CSVs stay ignored - they are large and fully regenerable.
+!*/outputs/*.png
