@@ -54,6 +54,10 @@ BAR = "=" * 78
 # QB ADP rank -> strategy. Ranks, not names, so selection uses only market
 # consensus available on draft day.
 STRATEGIES = {
+    # Rank-matched pairs: same QB1, with and without a rank-18 partner. These
+    # are the only rows from which an honest QB2 marginal can be computed.
+    **{f"rank{r} alone": [r] for r in (1, 2, 4, 6, 8, 10, 12)},
+    **{f"rank{r} + rank18": [r, 18] for r in (1, 2, 4, 6, 8, 10, 12)},
     "premium (QB1 only)":            [1],
     "premium + late partner":        [1, 16],
     "strong value + complement":     [4, 16],
@@ -67,10 +71,17 @@ STREAM_MIN_RANK = 20   # pool for the streaming strategy
 def pick_cost_lookup(curve: pl.DataFrame):
     """Expected non-QB usable PAR at a given overall pick."""
     rows = curve.to_dicts()
+    lo, hi = rows[0]["pick_from"], rows[-1]["pick_to"]
 
     def cost(adp: float) -> float:
+        # BUG FIX (2026-08-18, found by the QB-020 skeptic): comparing a float
+        # ADP against integer bucket edges let 8% of picks fall between buckets
+        # (e.g. 48.1 is in neither 37-48 nor 49-60) and be charged 0.0. Round
+        # and clamp first. The same fix was already in phase8 and was never
+        # backported here, which is exactly how it survived.
+        pick = int(min(max(round(adp), lo), hi))
         for r in rows:
-            if r["pick_from"] <= adp <= r["pick_to"]:
+            if r["pick_from"] <= pick <= r["pick_to"]:
                 return float(r["mean_usable_par"])
         return float(rows[-1]["mean_usable_par"]) if rows else 0.0
 
@@ -192,16 +203,51 @@ def main() -> int:
         print(f"{r['strategy']:<30}" +
               "".join(f"{(r[c] if r[c] is not None else float('nan')):>8.1f}" for c in cols))
 
-    # the decisive marginal comparison
-    print(f"\n{BAR}\n MARGINAL VALUE OF ADDING QB2\n{BAR}")
-    solo = agg.filter(pl.col("strategy") == "premium (QB1 only)")["net"].item()
-    pair = agg.filter(pl.col("strategy") == "premium + late partner")["net"].item()
-    print(f"premium QB alone        net {solo:+.1f}")
-    print(f"premium QB + partner    net {pair:+.1f}   ->  QB2 adds {pair - solo:+.1f}")
-    single = agg.filter(pl.col("strategy") == "single value QB")["net"].item()
-    latep = agg.filter(pl.col("strategy") == "late pair")["net"].item()
-    print(f"single value QB         net {single:+.1f}")
-    print(f"late pair               net {latep:+.1f}   ->  second cheap QB adds {latep - single:+.1f}")
+    # ---- the marginal value of QB2, RANK-MATCHED ----
+    #
+    # CORRECTION (2026-08-18, found by the QB-020 skeptic): the comparison that
+    # used to live here was invalid. It differenced "late pair" (QB ranks
+    # 10 + 18) against "single value QB" (rank 8) and attributed the gap to the
+    # second quarterback -- but those strategies have DIFFERENT QB1s, so most
+    # of the gap was the QB1 change, not QB2. The only honest marginal holds
+    # QB1 fixed. That correction reverses the sign.
+    print("")
+    print(BAR)
+    print(" MARGINAL VALUE OF QB2, RANK-MATCHED (QB1 held fixed)")
+    print(BAR)
+    print("Each row drafts the same QB1 with and without a rank-18 partner.")
+    print("")
+    print("QB1 rank".ljust(10) + "alone".rjust(9) + "with QB2".rjust(11)
+          + "QB2 adds".rjust(11) + "n".rjust(5))
+    print("-" * 78)
+    marg = []
+    for rank in (1, 2, 4, 6, 8, 10, 12):
+        solo_net, pair_net = [], []
+        for yr in TEST_SEASONS:
+            a = d.filter((pl.col("season") == yr) &
+                         (pl.col("strategy") == f"rank{rank} alone"))
+            b = d.filter((pl.col("season") == yr) &
+                         (pl.col("strategy") == f"rank{rank} + rank18"))
+            if a.height and b.height:
+                solo_net.append(a["net_value"].item())
+                pair_net.append(b["net_value"].item())
+        if len(solo_net) >= 4:
+            diff = [x - y for x, y in zip(pair_net, solo_net)]
+            m = sum(diff) / len(diff)
+            marg.append(m)
+            print(f"{rank:<10}{sum(solo_net)/len(solo_net):>9.1f}"
+                  f"{sum(pair_net)/len(pair_net):>11.1f}{m:>+11.1f}{len(diff):>5}")
+    if marg:
+        pooled = sum(marg) / len(marg)
+        sd = (sum((x - pooled) ** 2 for x in marg) / max(len(marg) - 1, 1)) ** 0.5
+        print("-" * 78)
+        print(f"pooled across QB1 ranks: {pooled:+.1f} pts/season "
+              f"(sd across ranks {sd:.1f}), positive for "
+              f"{sum(1 for x in marg if x > 0)} of {len(marg)} ranks")
+        print("")
+        print("Near zero or negative means a second quarterback does not pay for")
+        print("its pick, and the retired +9.7 / +30.1 figures were an artefact of")
+        print("comparing strategies that did not share a QB1.")
 
     out = Path("outputs"); out.mkdir(exist_ok=True)
     d.write_csv(out / "phase6_strategies.csv")

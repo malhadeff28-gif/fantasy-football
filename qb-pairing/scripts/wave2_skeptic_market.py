@@ -386,10 +386,18 @@ def build_panel(seasons: list[int], test_seasons: list[int]) -> pl.DataFrame:
          / ((pl.col("_sn") - 1).clip(lower_bound=0) + ORACLE_K))
         .alias("oracle_loo_shrunk")
     ).drop("_sm", "_sn", "_ss", "_lg")
-    # Joins do not guarantee row order, and least-squares solutions differ in
-    # the last bits when the design matrix rows are permuted. Pin the order so
-    # every run is bit-reproducible.
-    return p.sort(["season", "week", "player_id"])
+    # Reproducibility. Two sources of last-bit drift feed this panel:
+    #   * joins do not guarantee row order, and a least-squares solution differs
+    #     in its last bits when the design matrix rows are permuted;
+    #   * QB-016's own `prior_season_stats` aggregates with an unordered
+    #     group-by, so `prev_ppg` wobbles at ~1e-15 between runs.
+    # Neither is material -- they move a ladder rung by 0.001 pp -- but they do
+    # make the experiment non-bit-reproducible. Pinning the row order and
+    # quantising to 1e-9 (seven orders of magnitude below the precision of a
+    # fantasy point) removes both without touching any reported figure.
+    p = p.sort(["season", "week", "player_id"])
+    return p.with_columns(
+        [pl.col(c).round(9) for c, t in p.schema.items() if t == pl.Float64])
 
 
 def _load_adp_ext(seasons: list[int]) -> pl.DataFrame:

@@ -25,7 +25,7 @@ Detailed narrative in `RESEARCH_LOG.md`; summarised here as formal records.
 | QB-009 | Does game competitiveness shift opportunity pregame? | No | attempts flat across spreads | yes | REJECT |
 | QB-010 | Do weeks 14-18 differ from other weeks? | No | -0.02, t=-0.07 | yes | REJECT |
 | QB-011 | What is a second QB worth? | +12.0 pts/season | 25.4% of ceiling | yes | KEEP |
-| QB-012 | Does QB2 clear its draft cost? | Yes | +9.7 elite / +30.1 mid QB1 | yes | KEEP |
+| QB-012 | Does QB2 clear its draft cost? | ~~Yes~~ **No** | ~~+9.7 / +30.1~~ **-11.6 pooled** | yes | **BROKEN by QB-020** |
 | QB-013 | What is the weekly start/sit decision worth? | +4.9 pts/season | 12% of available upside | yes | KEEP |
 | QB-014 | Is the 2026 pair ranking robust? | No | reorders 1st to 123rd | n/a | REJECT |
 | QB-015 | Does waiting until round 7 for QB1 work? | Indistinguishable | +33.8 vs +46.3, SE ~19 | yes | UNCERTAIN |
@@ -211,3 +211,88 @@ tracking variables add nothing because they are redundant with box-score form),
 the conclusion is that progress requires **new information** - pregame starter
 and injury status, weather forecasts, player props - not a richer functional
 form or more features derived from the same box scores.
+
+
+---
+
+## Wave 2 - adversarial (2026-08-18)
+
+| ID | Target | Outcome | Verdict |
+| --- | --- | --- | --- |
+| QB-020 | QB-012 economics (+9.7 / +30.1) | Sign reverses when QB1 is held fixed | **BROKEN** |
+| QB-021 | QB-016 market increment | agent running | pending |
+| QB-022 | QB-008 weather effects | agent running | pending |
+| QB-023 | Independent economics replication | agent running | pending |
+
+### QB-020 - the headline economics do not survive
+
+Everything reproduced exactly first, which matters: the pick-value curve to
+0.0000 from a rebuild that never calls `draft_value.py`, the phase-6 table to
+the decimal, and the +9.7 / +30.1 / +12.0 marginals. The attacks therefore land
+on real numbers rather than on a misreading.
+
+**Fatal, structural.** The +30.1 was never a QB2 effect. `late pair` uses ADP QB
+ranks 10 + 18 while `single value QB` uses rank 8 - a *different QB1*. Most of
+the gap was the QB1 change. Holding QB1 fixed reverses the sign:
+
+| QB1 rank | Alone | With rank-18 QB2 | QB2 adds |
+| --- | --- | --- | --- |
+| 1 | 43.3 | 36.3 | **-7.0** |
+| 2 | 49.4 | 39.1 | **-10.3** |
+| 4 | 13.2 | 2.7 | **-10.5** |
+| 6 | 56.9 | 45.2 | **-11.7** |
+| 8 | 12.2 | -2.5 | **-14.7** |
+| 10 | 46.1 | 37.4 | **-8.7** |
+| 12 | 9.6 | -8.5 | **-18.2** |
+
+Pooled **-11.6 pts/season, negative for 7 of 7 ranks**. This was reproduced
+independently in the corrected `phase6_draft_cost.py`, not merely accepted from
+the agent.
+
+**Uncertainty was never reported and swamps the effect.** +9.7 has SE 4.8, CI
+[-3.8, +23.1], p = 0.116. +30.1 has SE 34.0, CI [-64.3, +124.5] - an interval
+189 points wide. Neither published figure was ever distinguishable from zero.
+QB-011's pair-level SE of 0.93 is also wrong because pairs share seasons and
+quarterbacks; the season-cluster SE is 4.0, over four times larger.
+
+**The insurance mechanism is refuted by its own data.** Decomposed weekly:
+coverage is worth +1.0 and the weekly choice +1.7 pts/season, against a 5.8
+point pick cost. Relaxing the >=12 games filter to admit *more* injured QB1s
+*lowers* the estimate (+12.0 to +7.5). Injuries explain only 8.8% of the +12.0.
+The waiver wire supplies the insurance for free.
+
+**Specification fragility.** Partner rank was unmotivated and outcome-
+determining: rank 14 gives -5.9, rank 16 gives +7.0, rank 18 gives -4.3, rank
+20 gives -1.6. Two seasons supply 79% of the total.
+
+**Two real bugs in my code, both confirmed and fixed.**
+1. `pick_cost_lookup` compared a float ADP against integer bucket edges, so 8%
+   of picks matched no bucket and were charged **0.0**. The identical fix was
+   already in `phase8_rank_2026.py` and had never been backported - which is
+   precisely how it survived.
+2. An unresolved ADP name deleted the strategy-season instead of charging a
+   bust. 2021's rank-18 pick was Deshaun Watson, who never played.
+
+**Attacks the finding survived:** survivorship (2.0% unjoined, worth 0.22 pts),
+mean-versus-median pick cost (median gives +17.2, the only significant cell in
+the report), and 5% trimming (QB-011 falls +12.0 to +9.2 but still clears zero).
+
+**Replacement level, measured rather than assumed.** The agent measured what
+phase 6's own streaming strategy actually achieves - the **56.3rd percentile**
+of weekly starters, median 59.5th - rather than accepting my median assumption
+or the 75th-percentile stress test. At the honest 60th percentile, +9.7 becomes
++5.5 and +12.0 becomes +8.4.
+
+### Revised position
+
+| Claim | Published | Revised |
+| --- | --- | --- |
+| Marginal QB2, elite QB1 | +9.7 | **-4.2, CI [-11.2, +2.5]** |
+| Marginal QB2, mid QB1 | +30.1 | **-12.0 (se 7.6) / -6.0 (se 8.7)** |
+| QB-011 gross | +12.0 | **+12.0, cluster CI [+4.3, +20.2]**; ~+4 to +6 net |
+| Weekly start/sit | +4.9 | **+1.7** on an ADP-selectable universe |
+
+**The draft recommendation cannot rest on +9.7 / +30.1.** The honest number is
+approximately zero and probably slightly negative, with an uncertainty band
+wider than the effect. QB-011 survives directionally and is the only member of
+this family that clears zero. The insurance argument is retired.

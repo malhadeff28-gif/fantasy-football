@@ -472,15 +472,21 @@ one.
 | # | File | Defect | Effect |
 |---|---|---|---|
 | 1 | `phase6_draft_cost.py` | `late pair` [10,18] vs `single value QB` [8] compared as a marginal QB2 effect | **+30.1 → −12.0 / −6.0**; sign reversal |
-| 2 | `phase6_draft_cost.py` | Partner rank 16 unmotivated and outcome-determining | sign flips at 14, 18 |
-| 3 | `phase6_draft_cost.py` | `group_by("strategy").mean()` over an unbalanced panel | script and paper disagree; drops the one healthy-QB1 season |
-| 4 | `phase6_draft_cost.py` | Scores weeks 17–18, outside `LEAGUE` weeks 1–16 | +9.7 → +8.1 |
-| 5 | `phase2c_pair_value.py` | `prev_ppg` joins the *projected* panel, which starts at the first test season, so **2020 is silently dropped**; the header still says 2020–2025 | n = 5, not 6 |
-| 6 | `phase2c_pair_value.py` | `>= 12 games` eligibility removes the QB1 failures the insurance story rests on | estimate falls to +7.5 when relaxed |
-| 7 | `draft_value.py` | `adp_with_outcomes` inner-joins, dropping drafted players who never played | +0.22 pts on a pick (immaterial) |
-| 8 | `engine.py` vs `phase2c` | `.quantile(0.5)` (nearest) vs `.median()` (linear) | up to 1.7 pts/season |
+| 2 | `phase6_draft_cost.py` | `pick_cost_lookup` uses `<=` on integer bucket edges against float ADP; **8.0% of picks match no bucket and are charged 0.0** | +30.1 → +24.6 |
+| 3 | `phase6_draft_cost.py` | Partner rank 16 unmotivated and outcome-determining | sign flips at 14, 18 |
+| 4 | `phase6_draft_cost.py` | `group_by("strategy").mean()` over an unbalanced panel | script and paper disagree; drops the one healthy-QB1 season |
+| 5 | `phase6_draft_cost.py` | An unresolved ADP name (a drafted QB who never played) deletes the strategy-season instead of charging a bust | structurally upward-biasing; here +30.1 → +31.7 |
+| 6 | `phase6_draft_cost.py` | Scores weeks 17–18, outside `LEAGUE` weeks 1–16 | +9.7 → +8.1 |
+| 7 | `phase2c_pair_value.py` | `prev_ppg` joins the *projected* panel, which starts at the first test season, so **2020 is silently dropped**; the header still says 2020–2025 | n = 5, not 6 |
+| 8 | `phase2c_pair_value.py` | `>= 12 games` eligibility removes the QB1 failures the insurance story rests on | estimate falls to +7.5 when relaxed |
+| 9 | `draft_value.py` | `adp_with_outcomes` inner-joins, dropping drafted players who never played | +0.22 pts on a pick (immaterial) |
+| 10 | `engine.py` vs `phase2c` | `.quantile(0.5)` (nearest) vs `.median()` (linear) | up to 1.7 pts/season |
 
-None of 1–5 involve look-ahead. All selection remains ADP-based and all
+Defects 2 and 5 are outright bugs and should be fixed regardless of what they do
+to any headline. Note that 5 moves the number **in the finding's favour**; it is
+listed because it is wrong, not because it helps the attack.
+
+None of these involve look-ahead. All selection remains ADP-based and all
 projections remain walk-forward; these are specification and bookkeeping errors,
 not leakage.
 
@@ -495,7 +501,7 @@ What can still be said honestly:
 
 1. **A late QB2 is cheap** — the forgone pick is worth 5–8 points, and its
    *median* return is exactly zero. That part of §11 survives intact. [evidence]
-2. **Carrying a second quarterback is roughly break-even.** −3 to −8 points per
+2. **Carrying a second quarterback is roughly break-even.** −4 to −9 points per
    season net, with a confidence interval that includes zero at the published
    replacement level. It is not a source of edge, and it is not a mistake either.
    [evidence]
@@ -533,6 +539,8 @@ Outputs (`qb-pairing/outputs/`):
 |---|---|
 | `qb020_curve_replication.csv` | independent vs published pick-value curve |
 | `qb020_pick_value_curves.csv` | four cost specifications by pick bucket |
+| `qb020_cost_lookup_gap.csv` | picks charged 0.0 by the bucket-gap defect |
+| `qb020_bust_seasons.csv` | strategy-seasons phase6 deletes, scored as busts |
 | `qb020_adp_survivorship.csv` | unmatched drafted players by bucket |
 | `qb020_adp_coverage.csv` | ADP list depth vs a 192-pick draft |
 | `qb020_streamer_percentile.csv` | measured streamer percentile by season |
