@@ -221,3 +221,49 @@ as a fix, made things marginally worse, and defaults off.
 **Thresholds are derived, not picked:** bust is 2 points or fewer (the median
 weekly DST-24 line - the waiver wire beat you), spike is 14 or more (the 89th
 percentile, past the median weekly DST-6 line of 11).
+
+---
+
+## DST-007 - pairing engine and the 2026 board
+
+| ID | Question | Result | Verdict |
+| --- | --- | --- | --- |
+| DST-007 | Can every two-defense pair be scored pregame? | Yes, 496 pairs | **KEEP** |
+| DST-008 | Does a second DRAFTED defense pay for its pick? | +1.47 pts over 6 weeks | **UNCERTAIN, likely no** |
+
+496 combinations scored across 2026 weeks 1-6. The weekly starter is chosen
+pregame on expected points; the outcome is drawn from the DST-006 simulator,
+so each pair inherits a distribution rather than a point estimate.
+
+**Best overall: KC + NE**, 47.8 expected points across weeks 1-6, and it tops
+both the floor list (10th percentile 31.0) and the ceiling list (90th
+percentile 66.0). **There is no floor-versus-ceiling trade-off to exploit** -
+pairs that are good are good at both ends, because both ends are driven by the
+same thing, facing bad offences. **Best first four weeks: KC + LAC** at 32.6.
+**Best inexpensive: NE + SF**, within 1.6 points of the top pair.
+
+**Honest caveat: New England appears in nine of the top ten pairs.** That is a
+schedule artifact, not a claim about the defense - they draw the Jets in week
+6 and the Raiders in week 5. The table ranks schedules, as intended, but must
+not be read as a scouting report.
+
+### DST-008 - the second drafted defense
+
+Holding defense A fixed, the best drafted partner beats streaming the best
+undrafted defense by **+1.47 points across weeks 1-6 (se 0.24), positive for
+16 of 16 defenses**. Consistently positive and small.
+
+Defenses go around picks 84-160, where a non-D/ST pick returns 3.9 to 9.6
+points above replacement over a full season. The units are not perfectly
+commensurable - six weeks of D/ST against a full season of a skill player -
+but the direction is clear: **the second drafted defense is probably not worth
+its pick.** Marked UNCERTAIN rather than REJECT because of that unit mismatch.
+
+Judged on D/ST evidence alone, per the isolation instruction. Note it lands in
+the same place as the QB2 result by an entirely independent route.
+
+### Deliverable
+
+`DST_STREAMING_RESEARCH.md` written: pair table (W1-4, W1-6, cost), best
+overall / inexpensive / floor / ceiling, market signals, double-counting
+analysis, limitations and recommendations.

@@ -6,9 +6,9 @@ space by doing work that would be unreasonable to calculate by hand.
 
 | Project | Question | Status |
 | --- | --- | --- |
-| [`qb-pairing/`](qb-pairing/) | Can two quarterbacks beat one expensive one? | Phase 1-9 complete; deep wave in progress |
-| [`dst-streaming/`](dst-streaming/) | Which two defenses can be rotated through weeks 1-6? | Starting |
-| [`rb-risk-upside/`](rb-risk-upside/) | Swift / Pollard / Judkins / Montgomery: floor vs risk-adjusted upside | Queued |
+| [`qb-pairing/`](qb-pairing/) | Can two quarterbacks beat one expensive one? | **Complete**, thesis rejected |
+| [`dst-streaming/`](dst-streaming/) | Which two defenses can be rotated through weeks 1-6? | **Complete** |
+| [`rb-risk-upside/`](rb-risk-upside/) | Swift / Pollard / Judkins / Montgomery: floor vs risk-adjusted upside | **Wave 0 complete** |
 
 Shared foundation in [`shared/`](shared/): nflverse ingestion and cache, market
 data (ADP, CBS, sportsbook, Kalshi), league scoring and evaluation utilities.
